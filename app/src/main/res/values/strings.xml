@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">TajnoKOM</string>
+    <string name="title">ТајноКОМ</string>
+    <string name="adr_hosta">Адреса \"домаћина\"( нпр. 192.123.1.2) или домен( нпр. \"@primer.com\")...</string>
+    <string name="korisnik">Корисничко име или број екстензије...</string>
+    <string name="loz">Лозинка...</string>
+    <string name="title_activity_logina">LoginaActivity</string>
+    <string name="TypeMsg">Порука...</string>
+</resources>
