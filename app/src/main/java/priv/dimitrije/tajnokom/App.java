@@ -231,6 +231,7 @@ public class App extends Service {
                 UaConfig uaConfig = new UaConfig();
                 uaConfig.setUserAgent("TajnoKOM via Pjsua2 v" + version.getFull());
                 pjTrash.add(version);
+                version.delete();
 
                 epConfig.setUaConfig(uaConfig);
 
@@ -243,6 +244,8 @@ public class App extends Service {
 
                 pjTrash.add(uaConfig);
                 pjTrash.add(epConfig);
+                uaConfig.delete();
+                epConfig.delete();
 
 
                 try {
@@ -254,7 +257,8 @@ public class App extends Service {
                     System.out.println(e.getMessage());
                 }
           //  }
-        pjTrash.add(sipTpConfig);
+                pjTrash.add(sipTpConfig);
+                sipTpConfig.delete();
 
         return instance;
     }
@@ -271,12 +275,12 @@ public class App extends Service {
             }
             System.out.println("??????????????????????????????????????????????????????????????????????????????");
             if(!logedin){
-                RDBMainDB db = App.getDb();
+                /*RDBMainDB db = App.getDb();
                 List<RELogInCreds> creds = db.getDAO().getAllLogins();
                 if(!creds.isEmpty()){
                     logIn(creds.get(0));
                     App.domain = creds.get(0).domainName;
-                }
+                }*/
                 List<REBuddy> buddies = db.getDAO().getAllBuddies();
                 if(buddies.isEmpty()){
                     REBuddy b = new REBuddy();

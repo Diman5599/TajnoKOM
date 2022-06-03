@@ -3,6 +3,8 @@ package priv.dimitrije.tajnokom;
 import android.app.NotificationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -10,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.Gravity;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -17,6 +20,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,6 +39,11 @@ public class MessagesActivity extends AppCompatActivity {
     private MyBuddyCfg bcfg;
     private SendInstantMessageParam prm;
     private MessagesRVAdapter messagesRVAdapter;
+
+    private boolean editing;
+    private ArrayList<REMessage> selectedMessages;
+
+    private Menu menu;
 
     private String getStatus(int code){
         String status = "Непознато";
@@ -57,6 +66,8 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        editing = false;
+        selectedMessages = new ArrayList<>();
 
         setContentView(R.layout.activity_messages);
 
@@ -164,7 +175,7 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        messagesRVAdapter = new MessagesRVAdapter(App.activeChatList);
+        messagesRVAdapter = new MessagesRVAdapter(App.activeChatList, this);
         rvMessages.setAdapter(messagesRVAdapter);
         rvMessages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rvMessages.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
@@ -207,6 +218,7 @@ public class MessagesActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         getMenuInflater().inflate(R.menu.chatmenu, menu);
         return true;
     }
@@ -237,5 +249,58 @@ public class MessagesActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         App.activeBuddy.delete();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(editing){
+            editing = false;
+            //TODO: resetuj toolbar
+            menu.removeItem(R.id.delete_msgs);
+            getMenuInflater().inflate(R.menu.chatmenu, menu);
+        }else{
+            super.onBackPressed();
+        }
+    }
+
+    public void toggleEditMode() {
+        editing = true;
+        menu.removeItem(R.id.action_contact_details);
+        getMenuInflater().inflate(R.menu.edit_mode_menu, menu);
+    }
+
+    public void addSelectedMessage(REMessage msg){
+        selectedMessages.add(msg);
+    }
+
+    public void removeSelectedMessage(REMessage msg){
+        selectedMessages.remove(msg);
+    }
+
+    public boolean isEditing(){
+        return editing;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.delete_msgs:
+                deleteSelectedMessages();
+                break;
+            case R.id.action_contact_details:
+                //TODO: Prikazi detalje kontakta
+
+                break;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void deleteSelectedMessages() {
+        App.activeChatList.removeAll(selectedMessages);
+        for(REMessage m : selectedMessages){
+            App.getDb().getDAO().deleteMessage(m);
+        }
     }
 }

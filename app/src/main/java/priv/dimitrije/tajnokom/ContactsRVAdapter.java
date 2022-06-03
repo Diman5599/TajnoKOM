@@ -73,6 +73,7 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
     }
 
     private void openChat(REBuddy buddy){
+        App.getInstance().pjTrash.clear();
         /*this.fragment.getActivity()
                 .getSupportFragmentManager()
                 .beginTransaction()

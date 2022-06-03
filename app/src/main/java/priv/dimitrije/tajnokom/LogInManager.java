@@ -47,7 +47,7 @@ public class LogInManager {
         try {
             App.usrAccount.create(accfg);
 
-            Thread.sleep(1000);
+            Thread.sleep(100);
 
             App.accInfo = App.usrAccount.getInfo();;
 
@@ -70,15 +70,17 @@ public class LogInManager {
             }
             //da bi moglo u ListenService da se registruje ponovo
             if (timeout >= 5 || App.accInfo.getRegStatus() == 403){
-                App.usrAccount.getInfo().setRegIsActive(false);
                 App.usrAccount.delete();
-                App.getInstance().pjTrash.add(App.usrAccount);
                 App.getInstance().pjTrash.add(App.aci);
                 App.getInstance().pjTrash.add(accfg);
+                App.aci.delete();
+                accfg.delete();
                 return false;
             }
             App.getInstance().pjTrash.add(App.aci);
             App.getInstance().pjTrash.add(accfg);
+            App.aci.delete();
+            accfg.delete();
             return true;
         } catch (Exception e) {
             e.printStackTrace();
