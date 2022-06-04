@@ -10,11 +10,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.LinkedList;
 import java.util.List;
 
 public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.ViewHolder> {
     List<REMessage> msgs;
     MessagesActivity parentActivity;
+
+    LinkedList<ViewHolder> selectedHolders;
 
     private int selectedCount;
 
@@ -23,6 +27,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
         msgs = items;
         parentActivity = messagesActivity;
 
+        selectedHolders = new LinkedList<>();
         selectedCount = 0;
     }
 
@@ -57,11 +62,14 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
                     holder.selected = true;
                     Drawable d = v.getResources().getDrawable(R.drawable.msg_hold_overlay, v.getContext().getTheme());
                     v.setForeground(d);
+                    selectedHolders.add(holder);
                     selectedCount++;
                     parentActivity.addSelectedMessage(msgs.get(holder.getBindingAdapterPosition()));
+                    System.out.println("---------SELECTING MESSAGE: " + msgs.get(holder.getBindingAdapterPosition()).msgText + "---------\n");
                 }else{
                     holder.selected = false;
                     v.setForeground(null);
+                    selectedHolders.remove(holder);
                     parentActivity.removeSelectedMessage(msgs.get(holder.getBindingAdapterPosition()));
                     selectedCount--;
                 }
@@ -74,14 +82,22 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
                     Drawable d = v.getResources().getDrawable(R.drawable.msg_hold_overlay, v.getContext().getTheme());
                     v.setForeground(d);
                     selectedCount++;
+                    selectedHolders.add(holder);
                     parentActivity.addSelectedMessage(msgs.get(holder.getBindingAdapterPosition()));
+                    System.out.println("---------SELECTING MESSAGE: " + msgs.get(holder.getBindingAdapterPosition()).msgText + "---------\n");
                     if(selectedCount == 1) parentActivity.toggleEditMode();
                 }
                 return true;
             });
     }
 
-
+    public void resetOverlays(){
+        for (ViewHolder vh : selectedHolders){
+            vh.itemView.setForeground(null);
+        }
+        selectedHolders.clear();
+        selectedCount = 0;
+    }
 
     private static MessagesRVAdapter instance;
 

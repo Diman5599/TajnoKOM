@@ -103,7 +103,7 @@ public class AddBuddyFragment extends Fragment{
             newContact.BuddyName =  etBuddyName.getText().toString();
             newContact.BuddyNo =  etBuddyNo.getText().toString();
 
-            App.getDb().getDAO().insertBuddy(newContact);
+            App.getInstance().getDb().getDAO().insertBuddy(newContact);
             App.contacts.add(newContact);
             App.contacts.sort(Comparator.comparing(o -> o.BuddyName));
 

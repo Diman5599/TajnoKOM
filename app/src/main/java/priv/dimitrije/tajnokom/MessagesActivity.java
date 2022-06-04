@@ -21,6 +21,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -115,9 +116,9 @@ public class MessagesActivity extends AppCompatActivity {
             synchronized (lock) {
                 Thread setActiveContactIdThread = new Thread(() -> {
                     int activeId;
-                    activeId = App.getDb().getDAO().getBuddyIdByNo(currentBuddyNo);
+                    activeId = App.getInstance().getDb().getDAO().getBuddyIdByNo(currentBuddyNo);
                     App.activeContactId = activeId;
-                    App.activeChatList = new LinkedList<>(App.getDb().getDAO().getMsgsFrom(activeId, 20));
+                    App.activeChatList = new LinkedList<>(App.getInstance().getDb().getDAO().getMsgsFrom(activeId, 20));
                     synchronized (lock) {
                         lock.notifyAll();
                     }
@@ -138,7 +139,7 @@ public class MessagesActivity extends AppCompatActivity {
         btnSend.setOnClickListener((v -> {
 
             try {
-                App.endpoint.libRegisterThread(Thread.currentThread().getName());
+                App.getInstance().endpoint.libRegisterThread(Thread.currentThread().getName());
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -159,7 +160,7 @@ public class MessagesActivity extends AppCompatActivity {
             reMessage.sent = true;
 
             Thread writeMsgToDb = new Thread(() -> {
-                App.getDb().getDAO().insertMessage(reMessage);
+                App.getInstance().getDb().getDAO().insertMessage(reMessage);
             });
             writeMsgToDb.start();
 
@@ -186,7 +187,7 @@ public class MessagesActivity extends AppCompatActivity {
                         AsyncTask getMoreMsgs = new AsyncTask() {
                             @Override
                             protected Object doInBackground(Object[] objects) {
-                                    helperList = App.getDb()
+                                    helperList = App.getInstance().getDb()
                                             .getDAO()
                                             .getMsgsFrom(
                                                     App.activeContactId,
@@ -254,13 +255,19 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if(editing){
-            editing = false;
-            //TODO: resetuj toolbar
-            menu.removeItem(R.id.delete_msgs);
-            getMenuInflater().inflate(R.menu.chatmenu, menu);
+            stopEditing();
+            selectedMessages.clear();
         }else{
             super.onBackPressed();
         }
+    }
+
+    private void stopEditing(){
+        editing = false;
+        messagesRVAdapter.resetOverlays();
+        //TODO: resetuj toolbar
+        menu.removeItem(R.id.delete_msgs);
+        getMenuInflater().inflate(R.menu.chatmenu, menu);
     }
 
     public void toggleEditMode() {
@@ -271,6 +278,8 @@ public class MessagesActivity extends AppCompatActivity {
 
     public void addSelectedMessage(REMessage msg){
         selectedMessages.add(msg);
+        System.out.println("---------SELECTING MESSAGE: " + msg.msgText + " | " + selectedMessages.size() + "---------\n");
+
     }
 
     public void removeSelectedMessage(REMessage msg){
@@ -298,9 +307,21 @@ public class MessagesActivity extends AppCompatActivity {
     }
 
     private void deleteSelectedMessages() {
+        System.out.println("***********************DELETING****************************");
         App.activeChatList.removeAll(selectedMessages);
-        for(REMessage m : selectedMessages){
-            App.getDb().getDAO().deleteMessage(m);
-        }
+        messagesRVAdapter.resetOverlays();
+        messagesRVAdapter.notifyDataSetChanged();
+        stopEditing();
+        Thread deleteMsgsThread = new Thread(() -> {
+            Iterator<REMessage> i = selectedMessages.iterator();
+            System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSELECTEDMESSAGES: " + selectedMessages.size() + "\n");
+            while(i.hasNext()) {
+                App.getInstance().getDb().getDAO().deleteMessage(i.next());
+                System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSELECTEDMESSAGES: " + selectedMessages.size() + "\n");
+            }
+            selectedMessages.clear();
+        });
+        deleteMsgsThread.start();
+
     }
 }

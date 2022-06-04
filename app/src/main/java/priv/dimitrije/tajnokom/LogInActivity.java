@@ -147,7 +147,7 @@ public class LogInActivity extends AppCompatActivity {
         protected void onPostExecute(Void unused) {
             try {
                 //registrovanje trenutne niti u okviru pjlib-a
-                App.endpoint.libRegisterThread("logint3");
+                App.getInstance().endpoint.libRegisterThread("logint3");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -165,7 +165,7 @@ public class LogInActivity extends AppCompatActivity {
                 if (loggedIn) {
                     new Thread(() -> {
                         //pamcenje trenutnih podataka za prijavu u Room-u
-                        RDBMainDB db = App.getDb();
+                        RDBMainDB db = App.getInstance().getDb();
                         RDMainDbDAO dao = db.getDAO();
                         if (!dao.getAllLogins().isEmpty()) dao.deleteLogin(dao.getAllLogins().get(0));
                         RELogInCreds reLogInCreds = new RELogInCreds();

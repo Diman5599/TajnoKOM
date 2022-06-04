@@ -21,7 +21,7 @@ public class LogInManager {
         username = reLogInCreds.username;
 
         try{
-            App.endpoint.libRegisterThread(Thread.currentThread().getName());
+            App.getInstance().endpoint.libRegisterThread(Thread.currentThread().getName());
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -68,24 +68,26 @@ public class LogInManager {
                 Thread.sleep(2000);
                 App.accInfo = App.usrAccount.getInfo();
             }
-            //da bi moglo u ListenService da se registruje ponovo
             if (timeout >= 5 || App.accInfo.getRegStatus() == 403){
                 App.usrAccount.delete();
-                App.getInstance().pjTrash.add(App.aci);
-                App.getInstance().pjTrash.add(accfg);
+                //App.getInstance().pjTrash.add(App.aci);
+                //App.getInstance().pjTrash.add(accfg);
                 App.aci.delete();
+                App.aci = null;
                 accfg.delete();
                 return false;
             }
-            App.getInstance().pjTrash.add(App.aci);
-            App.getInstance().pjTrash.add(accfg);
+            //App.getInstance().pjTrash.add(App.aci);
+            //App.getInstance().pjTrash.add(accfg);
             App.aci.delete();
+            App.aci = null;
             accfg.delete();
             return true;
         } catch (Exception e) {
             e.printStackTrace();
         }
         App.usrAccount.delete();
+        App.aci.delete();
         return false;
     }
 }

@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                     App.activeChats = new ArrayList<>();
 
                     //ucitavanje postojecih kontakata iz lokalne baze podataka
-                    App.contacts = App.getDb().getDAO().getAllBuddiesS();
+                    App.contacts = App.getInstance().getDb().getDAO().getAllBuddiesS();
                     App.contacts.removeIf(reBuddy -> reBuddy.BuddyName.equals(""));
                     App.contacts.sort(Comparator.comparing(o -> o.BuddyName));
                 }
@@ -94,24 +94,24 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            App.endpoint.libRegisterThread("logout");
+            App.getInstance().endpoint.libRegisterThread("logout");
         App.usrAccount.shutdown();
         new Thread(()->{
             try {
-                App.endpoint.libRegisterThread("logout");
+                App.getInstance().endpoint.libRegisterThread("logout");
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            RDBMainDB db = App.getDb();
+            RDBMainDB db = App.getInstance().getDb();
             db.getDAO().deleteLogin(db.getDAO().getAllLogins().get(0));
             db.getDAO().deleteAllBuddies();
         }).start();
         try {
-            App.endpoint.libDestroy();
+            App.getInstance().endpoint.libDestroy();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        App.endpoint.delete();
+        App.getInstance().endpoint.delete();
         App.getInstance().destroyInstance();
         Intent stopAppServiceIntent = new Intent(this, App.class);
         stopService(stopAppServiceIntent);

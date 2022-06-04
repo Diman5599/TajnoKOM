@@ -1,6 +1,5 @@
 package priv.dimitrije.tajnokom;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,7 +13,6 @@ import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.room.Room;
 
 import org.pjsip.pjsua2.AccountConfig;
@@ -23,20 +21,18 @@ import org.pjsip.pjsua2.AuthCredInfo;
 import org.pjsip.pjsua2.Endpoint;
 import org.pjsip.pjsua2.EpConfig;
 import org.pjsip.pjsua2.OnInstantMessageParam;
-import org.pjsip.pjsua2.PendingJob;
 import org.pjsip.pjsua2.TransportConfig;
 import org.pjsip.pjsua2.UaConfig;
 import org.pjsip.pjsua2.Version;
 import org.pjsip.pjsua2.pjsip_transport_type_e;
 
-import java.sql.Time;
 import java.util.LinkedList;
 import java.util.List;
 
 public class App extends Service {
     public static Context appContext;
 
-    public static Endpoint endpoint = null;
+    public Endpoint endpoint;
     public static MyAccount usrAccount;
     public static AccountConfig accfg;
 
@@ -50,7 +46,7 @@ public class App extends Service {
     public static EpConfig epConfig ;
     public static TransportConfig sipTpConfig;
 
-    public static RDBMainDB db = null;
+    public RDBMainDB db = null;
     public static AccountInfo accInfo;
     public static AuthCredInfo aci;
     public static TajniBuddy activeBuddy;
@@ -60,7 +56,7 @@ public class App extends Service {
 
     public static ChatRVAdapter chatRVAdapter;
 
-    public List<Object> pjTrash;
+    //public List<Object> pjTrash;
 
 
     //sadrzaj ceta u kome je korisnik trenutno, kako bi se azurirao pri stizanju poruke
@@ -138,7 +134,7 @@ public class App extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        pjTrash = new LinkedList<>();
+        //pjTrash = new LinkedList<>();
 
         initSipEndpoint(this);
 
@@ -180,7 +176,7 @@ public class App extends Service {
 
         startForeground(1, builder.build());
 
-        return Service.START_STICKY;
+        return Service.START_NOT_STICKY;
     }
 
     @Nullable
@@ -197,7 +193,7 @@ public class App extends Service {
         }
     }
 
-    public static RDBMainDB getDb(){
+    public RDBMainDB getDb(){
         return db;
     }
 
@@ -230,7 +226,7 @@ public class App extends Service {
                 Version version = endpoint.libVersion();
                 UaConfig uaConfig = new UaConfig();
                 uaConfig.setUserAgent("TajnoKOM via Pjsua2 v" + version.getFull());
-                pjTrash.add(version);
+                //pjTrash.add(version);
                 version.delete();
 
                 epConfig.setUaConfig(uaConfig);
@@ -242,10 +238,11 @@ public class App extends Service {
                     e.printStackTrace();
                 }
 
-                pjTrash.add(uaConfig);
-                pjTrash.add(epConfig);
+                //pjTrash.add(uaConfig);
+                //pjTrash.add(epConfig);
                 uaConfig.delete();
                 epConfig.delete();
+                epConfig = null;
 
 
                 try {
@@ -257,8 +254,9 @@ public class App extends Service {
                     System.out.println(e.getMessage());
                 }
           //  }
-                pjTrash.add(sipTpConfig);
+                //pjTrash.add(sipTpConfig);
                 sipTpConfig.delete();
+                sipTpConfig = null;
 
         return instance;
     }
@@ -269,7 +267,7 @@ public class App extends Service {
         protected Void doInBackground(Void... voids) {
             try {
                 //registrovanje trenutne niti u okviru pjlib-a
-                App.endpoint.libRegisterThread("logint");
+                App.getInstance().endpoint.libRegisterThread("logint");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -307,14 +305,14 @@ public class App extends Service {
         @Override
         protected OnInstantMessageParam doInBackground(OnInstantMessageParam[] params) {
             int contactId;
-            contactId = App.getDb().getDAO()
+            contactId = App.getInstance().getDb().getDAO()
                     .getBuddyIdByNo(params[0].getFromUri()
                             .substring(5, params[0].getFromUri().indexOf('@')));
 
-            buddyName = App.getDb().getDAO().getBuddyById(contactId).BuddyName;
+            buddyName = App.getInstance().getDb().getDAO().getBuddyById(contactId).BuddyName;
 
             receivedMessage.contactId = contactId;
-            App.getDb().getDAO().insertMessage(receivedMessage);
+            App.getInstance().getDb().getDAO().insertMessage(receivedMessage);
 
             if(contactId == App.activeContactId){
                 activeChatList.add(receivedMessage);
