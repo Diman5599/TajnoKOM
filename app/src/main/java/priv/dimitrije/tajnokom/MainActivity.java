@@ -89,13 +89,13 @@ public class MainActivity extends AppCompatActivity {
             PresenceStatus presenceStatus = new PresenceStatus();
             presenceStatus.setActivity(0);
             try {
-                App.usrAccount.setOnlineStatus(presenceStatus);
+                App.getInstance().usrAccount.setOnlineStatus(presenceStatus);
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             App.getInstance().endpoint.libRegisterThread("logout");
-        App.usrAccount.shutdown();
+            App.getInstance().usrAccount.shutdown();
         new Thread(()->{
             try {
                 App.getInstance().endpoint.libRegisterThread("logout");

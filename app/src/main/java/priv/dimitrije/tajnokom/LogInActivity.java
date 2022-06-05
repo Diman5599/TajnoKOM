@@ -56,7 +56,7 @@ public class LogInActivity extends AppCompatActivity {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LogInActivity.this);
             builder.setMessage("Да ли сте сигурни да желите да напустите апликацију?");
             builder.setPositiveButton("Да", (d, w) -> {
-                App.usrAccount.shutdown();
+                App.getInstance().usrAccount.shutdown();
                 finishAffinity();
                 android.os.Process.killProcess(android.os.Process.myPid());
                 System.exit(0);
@@ -128,16 +128,16 @@ public class LogInActivity extends AppCompatActivity {
             reLogInCreds.password = passw;
             reLogInCreds.username = extension;
 
-            App.domain = hostAdr;
-
             if (App.getInstance() == null) {
                 Intent appServiceIntent = new Intent(getApplicationContext(), App.class);
                 startForegroundService(appServiceIntent);
             }
             while (App.getInstance() == null) ;
 
+            App.getInstance().domain = hostAdr;
+
             loggedIn = App.getInstance().logIn(reLogInCreds);
-            App.domain = reLogInCreds.domainName;
+            App.getInstance().domain = reLogInCreds.domainName;
 
             return null;
         }

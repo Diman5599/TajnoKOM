@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -33,10 +34,10 @@ public class App extends Service {
     public static Context appContext;
 
     public Endpoint endpoint;
-    public static MyAccount usrAccount;
-    public static AccountConfig accfg;
+    public MyAccount usrAccount;
+    public AccountConfig accfg;
 
-    public static String domain;
+    public String domain;
 
     //Lista kontakata
     public static List<REBuddy> contacts;
@@ -46,7 +47,7 @@ public class App extends Service {
     public static EpConfig epConfig ;
     public static TransportConfig sipTpConfig;
 
-    public RDBMainDB db = null;
+    public RDBMainDB mainDB = null;
     public static AccountInfo accInfo;
     public static AuthCredInfo aci;
     public static TajniBuddy activeBuddy;
@@ -74,6 +75,30 @@ public class App extends Service {
 
     boolean logIn(RELogInCreds reLogInCreds){
         logedin = (new LogInManager()).logIn(reLogInCreds);
+        if(logedin){
+            Intent notificationIntent = new Intent(this, MainActivity.class);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    notificationIntent, 0);
+
+
+            Intent ztopIntent = new Intent(this, ShutdownReceiver.class);
+            ztopIntent.setAction("ZTOP");
+            PendingIntent stopFromNotificationIntent = PendingIntent.getBroadcast(getApplicationContext(), 105, ztopIntent, 0);
+
+            NotificationCompat.Action action = new NotificationCompat.Action(null, "Заустави", stopFromNotificationIntent);
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
+                    .setSmallIcon(R.mipmap.tkomico)
+                    .setContentTitle("ТајноКОМ")
+                    .setContentText("Пријављени сте на сервер " + domain)
+                    .setContentIntent(pendingIntent)
+                    .addAction(action)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            notificationManager.notify(1, builder.build());
+        }
         return logedin;
     }
 
@@ -152,31 +177,53 @@ public class App extends Service {
             notificationManager.createNotificationChannel(channel);
         }
 
-        if(db == null) {
+        /*if(db == null) {
             RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
             this.db = db;
-        }
+        }*/
 
         DbTask dbTask = new DbTask();
         dbTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         helpInstance = this;
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
                 .setSmallIcon(R.mipmap.tkomico)
-                .setContentTitle("TajnoKOM")
-                .setContentText("Пријављени сте на сервер: " + domain)
-                .setContentIntent(pendingIntent)
+                .setContentTitle("ТајноКОМ")
+                .setContentText("Пријава у току...")
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         startForeground(1, builder.build());
 
         return Service.START_NOT_STICKY;
+    }
+
+    public void logOut(){
+        try {
+            activeBuddy.delete();
+        }catch (NullPointerException e){
+            System.out.println("NO ACTIVE BUDDY");
+        }
+        try {
+            this.usrAccount.setRegistration(false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.usrAccount.shutdown();
+        this.usrAccount.delete();
+        try {
+            endpoint.libDestroy();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        endpoint.delete();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        logOut();
+        System.out.println("APP DESTROYED!");
     }
 
     @Nullable
@@ -186,15 +233,17 @@ public class App extends Service {
     }
 
     App(Context context){
-        if(db == null) {
+        if(mainDB == null) {
             appContext = context;
             RDBMainDB db = Room.databaseBuilder(appContext, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
-            this.db = db;
+            this.mainDB = db;
         }
     }
 
     public RDBMainDB getDb(){
-        return db;
+        RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
+        this.mainDB = db;
+        return mainDB;
     }
 
     public void destroyInstance(){
@@ -271,7 +320,6 @@ public class App extends Service {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.println("??????????????????????????????????????????????????????????????????????????????");
             if(!logedin){
                 /*RDBMainDB db = App.getDb();
                 List<RELogInCreds> creds = db.getDAO().getAllLogins();
@@ -279,28 +327,30 @@ public class App extends Service {
                     logIn(creds.get(0));
                     App.domain = creds.get(0).domainName;
                 }*/
-                List<REBuddy> buddies = db.getDAO().getAllBuddies();
+                List<REBuddy> buddies = getDb().getDAO().getAllBuddies();
                 if(buddies.isEmpty()){
                     REBuddy b = new REBuddy();
                     b.BuddyName = "";
                     b.BuddyNo = "/";
-                    db.getDAO().insertBuddy(b);
+                    getDb().getDAO().insertBuddy(b);
                 }
+                closeDb();
             }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void unused) {
-
-
             instance = helpInstance;
-            System.out.println("??????????????????????????????????????????????????????????????????????????????");
             super.onPostExecute(unused);
         }
     }
 
-    class WriteNewMessageTask extends AsyncTask<OnInstantMessageParam, OnInstantMessageParam, OnInstantMessageParam>{
+    public void closeDb() {
+        this.mainDB.close();
+    }
+
+    class WriteNewMessageTask extends AsyncTask<OnInstantMessageParam, OnInstantMessageParam, OnInstantMessageParam> {
 
         @Override
         protected OnInstantMessageParam doInBackground(OnInstantMessageParam[] params) {
@@ -314,7 +364,7 @@ public class App extends Service {
             receivedMessage.contactId = contactId;
             App.getInstance().getDb().getDAO().insertMessage(receivedMessage);
 
-            if(contactId == App.activeContactId){
+            if (contactId == App.activeContactId) {
                 activeChatList.add(receivedMessage);
             }
             return params[0];
@@ -325,5 +375,4 @@ public class App extends Service {
             finnishNotification(prm);
         }
     }
-
 }

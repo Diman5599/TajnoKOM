@@ -78,12 +78,12 @@ public class MessagesActivity extends AppCompatActivity {
 
         App.activeBuddy = new TajniBuddy();
         bcfg = new MyBuddyCfg();
-        bcfg.setUri("sip:"+currentBuddyNo+"@"+App.domain);
+        bcfg.setUri("sip:"+currentBuddyNo+"@"+App.getInstance().domain);
 
         int buddyStatus = 0;
 
         try {
-            App.activeBuddy.create(App.usrAccount, bcfg);
+            App.activeBuddy.create(App.getInstance().usrAccount, bcfg);
             App.activeBuddy.subscribePresence(true);
             while (App.activeBuddy.getInfo().getPresStatus().getStatus() == 0);
             buddyStatus = App.activeBuddy.getInfo().getPresStatus().getStatus();
