@@ -137,7 +137,6 @@ public class MessagesActivity extends AppCompatActivity {
 
         btnSend = findViewById(R.id.btnSend);
         btnSend.setOnClickListener((v -> {
-
             try {
                 App.getInstance().endpoint.libRegisterThread(Thread.currentThread().getName());
             }catch (Exception e){

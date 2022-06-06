@@ -57,6 +57,14 @@
                 <action android:name="ZTOP" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".NotificationReplyReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="REMOTE_REPLY" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

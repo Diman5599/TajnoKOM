@@ -4,7 +4,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -14,9 +13,9 @@ import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
 import androidx.room.Room;
 
-import org.pjsip.pjsua2.AccountConfig;
 import org.pjsip.pjsua2.AccountInfo;
 import org.pjsip.pjsua2.AuthCredInfo;
 import org.pjsip.pjsua2.Endpoint;
@@ -35,7 +34,6 @@ public class App extends Service {
 
     public Endpoint endpoint;
     public MyAccount usrAccount;
-    public AccountConfig accfg;
 
     public String domain;
 
@@ -136,20 +134,36 @@ public class App extends Service {
                     new NotificationCompat.MessagingStyle.Message(msg.getMsgBody(), Long.valueOf(java.time.LocalTime.now().toSecondOfDay()) ,buddyName);
 
             NotificationCompat.MessagingStyle style = null;
-
             StatusBarNotification[] nots = notificationManager.getActiveNotifications();
             for(StatusBarNotification s : nots){
-                if(s.getId() == receivedMessage.contactId) style =
-                        NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(s.getNotification());
+                if(s.getId() == receivedMessage.contactId) {
+                    style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(s.getNotification());
+                    break;
+                }
             }
-
             if (style == null) style = new NotificationCompat.MessagingStyle(buddyName);
+
+            //Odgovarenje iz notifikacije
+            RemoteInput remoteInput = new RemoteInput.Builder("REMOTE_MSG").setLabel("Унесите поруку...").build();
+
+            Intent replyIntent = new Intent(this, NotificationReplyReceiver.class);
+            replyIntent.putExtra("buddyName", buddyName);
+            replyIntent.putExtra("buddyNo", buddyNo);
+            replyIntent.putExtra("notification_id", receivedMessage.contactId);
+            replyIntent.getStringExtra("REMOTE_REPLY");
+            PendingIntent replyPendingIntent = PendingIntent.getBroadcast(this, 106, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            NotificationCompat.Action.Builder rplyBuilder = new NotificationCompat.Action.Builder(null, "Одговори", replyPendingIntent)
+                    .addRemoteInput(remoteInput)
+                    .setAllowGeneratedReplies(true);
+
+            NotificationCompat.Action rplyAction = rplyBuilder.build();
+            //*********************************
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
                     .setSmallIcon(R.mipmap.tkomico)
                     .setContentIntent(pendingIntent)
-                    .setStyle(style
-                            .addMessage(message))
+                    .setStyle(style.addMessage(message))
+                    .addAction(rplyAction)
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
             notificationManager.notify(receivedMessage.contactId, builder.build());
