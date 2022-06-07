@@ -22,6 +22,7 @@ public class AccountNatConfig extends PersistentObject {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING ACCOUNTNATCONFIG!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

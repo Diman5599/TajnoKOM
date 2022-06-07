@@ -1,16 +1,19 @@
 package priv.dimitrije.tajnokom;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.HashMap;
@@ -21,23 +24,21 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
 
     private List<REBuddy> localDataSet;
     private Map<View, Integer> buttonMap;
-    private Fragment fragment;
-
+    private ContactsFragment fragment;
 
     //dataSet - trenutna lista kontakata
-    public ContactsRVAdapter(List<REBuddy> dataSet, Fragment callingFragment){
+    public ContactsRVAdapter(List<REBuddy> dataSet, ContactsFragment callingFragment){
         localDataSet = dataSet;
         buttonMap = new HashMap<>();
         this.fragment = callingFragment;
     }
-
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.contact_field, parent, false);
 
-        return new ViewHolder(view);
+        return new ViewHolder(view, this);
     }
 
     //izvrsava se pri svakom prebacivanju na recyclerview
@@ -50,36 +51,15 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
         holder.tvInitials.setGravity(Gravity.CENTER);
         holder.setIndex(position);
         holder.bindButton(buttonMap);
-        holder.field.setOnClickListener((v -> {
-            REBuddy b = App.contacts.get(buttonMap.get(v));
-            /*if(!App.activeChats.stream().anyMatch(reBuddy -> b.BuddyName.equals(reBuddy.BuddyName))) {
-                App.activeChats.add(0, b);
-                App.chatRVAdapter.notifyItemInserted(App.activeChats.size() - 1);
-            }*/
-            openChat(b);
-        }));
-        holder.tvContactNo.setOnClickListener(v -> clicked(v));
-        holder.tvInitials.setOnClickListener(v -> clicked(v));
-        holder.tvContactName.setOnClickListener(v -> clicked(v));
+
     }
 
     private void clicked(View v){
-        REBuddy b = App.contacts.get(buttonMap.get(v.getParent()));
-            /*if(!App.activeChats.stream().anyMatch(reBuddy -> b.BuddyName.equals(reBuddy.BuddyName))) {
-                App.activeChats.add(0, b);
-                App.chatRVAdapter.notifyItemInserted(App.activeChats.size() - 1);
-            }*/
+        REBuddy b = App.getInstance().contacts.get(buttonMap.get(v));
         openChat(b);
     }
 
     private void openChat(REBuddy buddy){
-        /*this.fragment.getActivity()
-                .getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragmentContainerView, MessagesActivity.class, args)
-                .addToBackStack("chat")
-                .setReorderingAllowed(true)
-                .commit();*/
         Intent msgActivityIntent = new Intent(this.fragment.getActivity(), MessagesActivity.class);
 
         msgActivityIntent.putExtra("buddyName", buddy.BuddyName);
@@ -109,17 +89,56 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
         //koji je u listi (veza sa kontaktom)
         private int index;
 
+        ContactsRVAdapter contactsRVAdapter;
+
         TextView tvInitials;
         TextView tvContactName;
         TextView tvContactNo;
-        ConstraintLayout field;
+        TextView overlay;
+        CheckBox cbSelectedContact;
 
-        public ViewHolder(View v){
+        public ViewHolder(View v, ContactsRVAdapter adapter){
             super(v);
+            contactsRVAdapter = adapter;
             tvInitials = v.findViewById(R.id.tvInitials);
             tvContactName = v.findViewById(R.id.tvContactNm);
             tvContactNo = v.findViewById(R.id.tvContactNo);
-            field = v.findViewById(R.id.contactFieldLayout);
+            overlay = v.findViewById(R.id.tvOverlay);
+            cbSelectedContact = v.findViewById(R.id.cbSelectContact);
+
+            overlay.setOnLongClickListener((vw -> {
+                if(!contactsRVAdapter.fragment.isEditig()) {
+                 ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+                    lp.horizontalBias = 0;
+                    cbSelectedContact.setLayoutParams(lp);
+                    cbSelectedContact.setVisibility(View.VISIBLE);
+                    cbSelectedContact.setChecked(true);
+                    contactsRVAdapter.fragment.toggleEditing();
+
+                }
+                return true;
+            }));
+
+            overlay.setOnClickListener(vw -> {
+                Animation animation = AnimationUtils.loadAnimation(vw.getContext(), R.anim.contact_clicked_anim);
+                overlay.setBackgroundColor(vw.getResources().getColor(R.color.bordeaux, vw.getContext().getTheme()));
+                overlay.startAnimation(animation);
+                overlay.postDelayed(()->{
+                    if(!contactsRVAdapter.fragment.isEditig()) contactsRVAdapter.clicked(vw);
+                    else {
+                        cbSelectedContact.setChecked(!cbSelectedContact.isChecked());
+                    }
+                    overlay.setBackgroundColor(vw.getResources().getColor(R.color.transparency, vw.getContext().getTheme()));
+                }, 200);
+            });
+
+            cbSelectedContact.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if(isChecked){
+                    contactsRVAdapter.fragment.addContactToSelected(contactsRVAdapter.localDataSet.get(this.getBindingAdapterPosition()));
+                }else{
+                    contactsRVAdapter.fragment.removeContactFromSelected(contactsRVAdapter.localDataSet.get(this.getBindingAdapterPosition()));
+                }
+            });
         }
 
         public int getIndex(){return index;}
@@ -127,7 +146,7 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
         public void setIndex(int i){index = i;}
 
         public void bindButton(Map<View, Integer> map){
-            map.put(field, index);
+            map.put(overlay, index);
         }
     }
 

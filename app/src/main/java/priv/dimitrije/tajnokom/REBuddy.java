@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey;
 
 import java.io.Serializable;
 
-@Entity(indices = {@Index(value = "BuddyName", unique = true)})
+@Entity(indices = {@Index(value = "BuddyNo", unique = true)})
 public class REBuddy implements Serializable {
     @PrimaryKey(autoGenerate = true)
     public int BuddyId;

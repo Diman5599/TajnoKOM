@@ -1,6 +1,7 @@
 package priv.dimitrije.tajnokom;
 
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -64,6 +65,9 @@ public class MessagesActivity extends AppCompatActivity {
         return status;
     }
 
+    private int buddyStatus = 0;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,23 +79,38 @@ public class MessagesActivity extends AppCompatActivity {
         currentBuddyName = getIntent().getExtras().getString("buddyName");
         currentBuddyNo = getIntent().getExtras().getString("buddyNo");
 
+        ProgressDialog progressDialog = ProgressDialog.show(MessagesActivity.this, "", "", true);
+        progressDialog.show();
+        AsyncTask connectToBuddyTask = new AsyncTask() {
+            @Override
+            protected Object doInBackground(Object[] objects) {
+                TajniBuddy buddy = new TajniBuddy();
+                bcfg = new MyBuddyCfg();
+                bcfg.setUri("sip:"+currentBuddyNo+"@"+App.getInstance().domain);
 
-        App.activeBuddy = new TajniBuddy();
-        bcfg = new MyBuddyCfg();
-        bcfg.setUri("sip:"+currentBuddyNo+"@"+App.getInstance().domain);
+                try {
+                    buddy.create(App.getInstance().usrAccount, bcfg);
+                    buddy.subscribePresence(true);
+                    int cnt = 0;
+                    while (buddy.getInfo().getPresStatus().getStatus() == 0 && cnt < 6){
+                        cnt++;
+                    }
+                    buddyStatus = buddy.getInfo().getPresStatus().getStatus();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-        int buddyStatus = 0;
+                bcfg.delete();
+                App.getInstance().activeBuddy = buddy;
+                return null;
+            }
 
-        try {
-            App.activeBuddy.create(App.getInstance().usrAccount, bcfg);
-            App.activeBuddy.subscribePresence(true);
-            while (App.activeBuddy.getInfo().getPresStatus().getStatus() == 0);
-            buddyStatus = App.activeBuddy.getInfo().getPresStatus().getStatus();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        bcfg.delete();
+            @Override
+            protected void onPostExecute(Object o) {
+                progressDialog.dismiss();
+            }
+        };
+        connectToBuddyTask.execute();
 
         //postavljanje Toolbar-a
         Toolbar toolbar = findViewById(R.id.chatToolbar);
@@ -116,9 +135,11 @@ public class MessagesActivity extends AppCompatActivity {
             synchronized (lock) {
                 Thread setActiveContactIdThread = new Thread(() -> {
                     int activeId;
-                    activeId = App.getInstance().getDb().getDAO().getBuddyIdByNo(currentBuddyNo);
-                    App.activeContactId = activeId;
-                    App.activeChatList = new LinkedList<>(App.getInstance().getDb().getDAO().getMsgsFrom(activeId, 20));
+                    RDBMainDB db = App.getInstance().getDb();
+                    activeId = db.getDAO().getBuddyIdByNo(currentBuddyNo);
+                    App.getInstance().activeContactId = activeId;
+                    App.getInstance().activeChatList = new LinkedList<>(db.getDAO().getMsgsFrom(activeId, 20));
+                    db.close();
                     synchronized (lock) {
                         lock.notifyAll();
                     }
@@ -149,23 +170,24 @@ public class MessagesActivity extends AppCompatActivity {
             etMessage.setText(null);
 
             try {
-                App.activeBuddy.sendInstantMessage(prm);
+                App.getInstance().activeBuddy.sendInstantMessage(prm);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             REMessage reMessage = new REMessage();
             reMessage.msgText = prm.getContent();
-            reMessage.contactId = App.activeContactId;
+            reMessage.contactId = App.getInstance().activeContactId;
             reMessage.sent = true;
 
             Thread writeMsgToDb = new Thread(() -> {
                 App.getInstance().getDb().getDAO().insertMessage(reMessage);
+                App.getInstance().closeDb();
             });
             writeMsgToDb.start();
 
-            App.activeChatList.add(reMessage);
+            App.getInstance().activeChatList.add(reMessage);
             messagesRVAdapter.notifyItemInserted(messagesRVAdapter.getItemCount()-1);
-            rvMessages.scrollToPosition(App.activeChatList.size()-1);
+            rvMessages.scrollToPosition(App.getInstance().activeChatList.size()-1);
 
             prm.delete();
         }));
@@ -175,31 +197,32 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        messagesRVAdapter = new MessagesRVAdapter(App.activeChatList, this);
+        messagesRVAdapter = new MessagesRVAdapter(App.getInstance().activeChatList, this);
         rvMessages.setAdapter(messagesRVAdapter);
         rvMessages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rvMessages.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
             LinearLayoutManager linearLayoutManager = (LinearLayoutManager)((RecyclerView) v).getLayoutManager();
             int pos = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
             if (pos <= 2){
-                    if(App.activeChatList.size() >= 20) {
+                    if(App.getInstance().activeChatList.size() >= 20) {
                         AsyncTask getMoreMsgs = new AsyncTask() {
                             @Override
                             protected Object doInBackground(Object[] objects) {
                                     helperList = App.getInstance().getDb()
                                             .getDAO()
                                             .getMsgsFrom(
-                                                    App.activeContactId,
-                                                    App.activeChatList.size() + 20
+                                                    App.getInstance().activeContactId,
+                                                    App.getInstance().activeChatList.size() + 20
                                             );
+                                    App.getInstance().closeDb();
                                     return null;
                             }
 
                             @Override
                             protected void onPostExecute(Object o) {
-                                synchronized (App.activeChatList) {
-                                    App.activeChatList.clear();
-                                    App.activeChatList.addAll(helperList);
+                                synchronized (App.getInstance().activeChatList) {
+                                    App.getInstance().activeChatList.clear();
+                                    App.getInstance().activeChatList.addAll(helperList);
                                 }
                                 messagesRVAdapter.notifyDataSetChanged();
                             }
@@ -210,7 +233,7 @@ public class MessagesActivity extends AppCompatActivity {
         });
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancel(App.activeContactId);
+        notificationManager.cancel(App.getInstance().activeContactId);
 
         rvMessages.scrollToPosition(messagesRVAdapter.getItemCount()-1);
 
@@ -248,7 +271,7 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        App.activeBuddy.delete();
+        App.getInstance().activeBuddy.delete();
     }
 
     @Override
@@ -306,18 +329,17 @@ public class MessagesActivity extends AppCompatActivity {
     }
 
     private void deleteSelectedMessages() {
-        System.out.println("***********************DELETING****************************");
-        App.activeChatList.removeAll(selectedMessages);
+        App.getInstance().activeChatList.removeAll(selectedMessages);
         messagesRVAdapter.resetOverlays();
         messagesRVAdapter.notifyDataSetChanged();
         stopEditing();
         Thread deleteMsgsThread = new Thread(() -> {
             Iterator<REMessage> i = selectedMessages.iterator();
-            System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSELECTEDMESSAGES: " + selectedMessages.size() + "\n");
+            RDBMainDB db = App.getInstance().getDb();
             while(i.hasNext()) {
-                App.getInstance().getDb().getDAO().deleteMessage(i.next());
-                System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSELECTEDMESSAGES: " + selectedMessages.size() + "\n");
+                db.getDAO().deleteMessage(i.next());
             }
+            db.close();
             selectedMessages.clear();
         });
         deleteMsgsThread.start();

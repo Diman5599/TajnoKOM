@@ -97,6 +97,7 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
 
         Thread writeMsgToDb = new Thread(() -> {
             App.getInstance().getDb().getDAO().insertMessage(reMessage);
+            App.getInstance().closeDb();
         });
         writeMsgToDb.start();
 

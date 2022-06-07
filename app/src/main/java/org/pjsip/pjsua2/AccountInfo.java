@@ -23,7 +23,7 @@ public class AccountInfo {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
-    delete();
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING ACCOUNTINFO!!!!!!!!!!!!!!!!!!!!!");    delete();
   }
 
   public synchronized void delete() {

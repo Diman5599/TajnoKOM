@@ -23,6 +23,9 @@ import java.util.function.Predicate;
 
 public class MainActivity extends AppCompatActivity {
     private FragmentContainerView fragmentView;
+    public Menu menu;
+    public ContactsFragment contactsFragment;
+    public ChatFragment chatFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,18 +52,20 @@ public class MainActivity extends AppCompatActivity {
         new Thread(
                 ()->{
                     //zameniti ucitavanjem iz baze!!!!!!!!!!
-                    App.activeChats = new ArrayList<>();
+                    App.getInstance().activeChats = new ArrayList<>();
 
                     //ucitavanje postojecih kontakata iz lokalne baze podataka
-                    App.contacts = App.getInstance().getDb().getDAO().getAllBuddiesS();
-                    App.contacts.removeIf(reBuddy -> reBuddy.BuddyName.equals(""));
-                    App.contacts.sort(Comparator.comparing(o -> o.BuddyName));
+                    App.getInstance().contacts = App.getInstance().getDb().getDAO().getAllBuddiesS();
+                    App.getInstance().contacts.removeIf(reBuddy -> reBuddy.BuddyName.equals(""));
+                    App.getInstance().contacts.sort(Comparator.comparing(o -> o.BuddyName));
+                    App.getInstance().closeDb();
                 }
         ).start();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         getMenuInflater().inflate(R.menu.mainmenu, menu);
         return true;
     }
@@ -74,14 +79,25 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_add_buddy:
                 goToAddBuddy();
                 return true;
+            case R.id.action_delete_contact:
+                contactsFragment.deleteContacts();
+                break;
+            case R.id.action_cancel_contact_edit:
+                contactsFragment.clearSelectedContacts();
+                contactsFragment.toggleEditing();
+                break;
             default:
-                return super.onOptionsItemSelected(item);
+                break;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     private void goToAddBuddy() {
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainerView, AddBuddyFragment.class, null).addToBackStack("test1")
-                .setReorderingAllowed(true).commit();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainerView, AddBuddyFragment.class, null)
+                .addToBackStack("fragment_main")
+                .commit();
     }
 
     private void logOut() {
@@ -105,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
             RDBMainDB db = App.getInstance().getDb();
             db.getDAO().deleteLogin(db.getDAO().getAllLogins().get(0));
             db.getDAO().deleteAllBuddies();
+            db.close();
         }).start();
         try {
             App.getInstance().endpoint.libDestroy();
@@ -123,39 +140,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    /*@Override
-    public void onBackPressed() {
-        int empty = getSupportFragmentManager().getBackStackEntryCount();
-        System.out.println(empty);
-        if (empty==0) {
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
-            builder.setMessage("Да ли сте сигурни да желите да напустите апликацију?");
-            builder.setPositiveButton("Да", (d, w) -> {
-                App.usrAccount.shutdown();
-                finishAffinity();
-                android.os.Process.killProcess(android.os.Process.myPid());
-                System.exit(0);
-            });
-            builder.setNegativeButton("Не", (d, w) -> {
-                d.cancel();
-            });
-            builder.show();
-        }else{
-            super.onBackPressed();
-        }
-    }*/
-
     @Override
     protected void onPause() {
         super.onPause();
-        /*PresenceStatus presenceStatus = new PresenceStatus();
-        presenceStatus.setActivity(0);
-        try {
-            App.usrAccount.setOnlineStatus(presenceStatus);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
     }
 
     @Override

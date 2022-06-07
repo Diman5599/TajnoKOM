@@ -22,6 +22,7 @@ public class AccountSipConfig extends PersistentObject {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING ACCOUNTSIPCONFIG!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

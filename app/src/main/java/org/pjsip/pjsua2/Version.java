@@ -23,6 +23,7 @@ public class Version {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING VERSION!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

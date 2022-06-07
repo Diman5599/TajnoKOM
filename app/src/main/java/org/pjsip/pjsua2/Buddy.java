@@ -23,6 +23,7 @@ public class Buddy {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING BUDDY!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

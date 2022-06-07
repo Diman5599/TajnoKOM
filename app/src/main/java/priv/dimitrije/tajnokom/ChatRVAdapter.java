@@ -53,7 +53,7 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
 
     @Override
     public int getItemCount() {
-        return App.activeChats.size();
+        return App.getInstance().activeChats.size();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{

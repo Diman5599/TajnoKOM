@@ -35,8 +35,6 @@ public class LogInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
 
-        App.appContext = getBaseContext();
-
         Button btnPrijava = (Button) findViewById(R.id.btnPrijava);
         btnPrijava.setOnClickListener(v -> requestRegistration(v));
 
@@ -45,9 +43,9 @@ public class LogInActivity extends AppCompatActivity {
         pass = (EditText) findViewById(R.id.txtLozinka);
 
         //test parametri
-        host.setText("192.168.8.101");
-        usr.setText("Test");
-        pass.setText("100");
+        host.setText("sip.linphone.org");
+        usr.setText("dim55");
+        pass.setText("Kolasinac0212");
     }
 
     @Override
@@ -122,23 +120,38 @@ public class LogInActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... voids) {
 
-
             RELogInCreds reLogInCreds = new RELogInCreds();
             reLogInCreds.domainName = hostAdr;
             reLogInCreds.password = passw;
             reLogInCreds.username = extension;
 
-            if (App.getInstance() == null) {
-                Intent appServiceIntent = new Intent(getApplicationContext(), App.class);
-                startForegroundService(appServiceIntent);
+            Bundle lock = new Bundle();
+            App.logInLock = lock;
+            synchronized (lock) {
+                if (App.getInstance() == null) {
+                    Intent appServiceIntent = new Intent(getApplicationContext(), App.class);
+                    Bundle extras = new Bundle();
+                    extras.putString("domain", hostAdr);
+                    extras.putString("pass", passw);
+                    extras.putString("user", extension);
+                    appServiceIntent.putExtras(extras);
+                    startForegroundService(appServiceIntent);
+                }
+                try {
+                    lock.wait();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            while (App.getInstance() == null) ;
 
-            App.getInstance().domain = hostAdr;
 
-            loggedIn = App.getInstance().logIn(reLogInCreds);
-            App.getInstance().domain = reLogInCreds.domainName;
+            try {
+                App.getInstance().endpoint.libRegisterThread(Thread.currentThread().getName());
+            }catch (Exception e){
+                e.printStackTrace();
+            }
 
+            loggedIn = App.getInstance().isLogedin();
             return null;
         }
 
@@ -147,7 +160,7 @@ public class LogInActivity extends AppCompatActivity {
         protected void onPostExecute(Void unused) {
             try {
                 //registrovanje trenutne niti u okviru pjlib-a
-                App.getInstance().endpoint.libRegisterThread("logint3");
+                App.getInstance().endpoint.libRegisterThread(Thread.currentThread().getName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -173,6 +186,7 @@ public class LogInActivity extends AppCompatActivity {
                         reLogInCreds.password = passw;
                         reLogInCreds.username = extension;
                         dao.insertLogin(reLogInCreds);
+                        db.close();
                     }).start();
 
                     //prijava uspela
@@ -183,13 +197,14 @@ public class LogInActivity extends AppCompatActivity {
 
                     //ukloni servis
                     Intent stopAppServiceIntent = new Intent(getApplicationContext(), App.class);
+                    App.getInstance().destroyInstance();
                     stopService(stopAppServiceIntent);
 
                     //neuspela prijava
                     String msg = null;
-                    switch (App.accInfo.getRegStatus()){
+                    switch (App.getInstance().accInfo.getRegStatus()){
                         case SipConstants.SERVER_NOT_RESPONDING:
-                            msg = "Сервер се не одазива (" + App.accInfo.getRegStatus() + ")";
+                            msg = "Сервер се не одазива (" + App.getInstance().accInfo.getRegStatus() + ")";
                             break;
                         case SipConstants.WRONG_PASSWORD_OR_USER:
                             msg = "Погрешна шифра или корисничко име.\nПокушајте поново.";

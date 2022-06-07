@@ -5,6 +5,8 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -99,13 +101,34 @@ public class AddBuddyFragment extends Fragment{
                 e.printStackTrace();
             }*/
 
-            REBuddy newContact = new REBuddy();
-            newContact.BuddyName =  etBuddyName.getText().toString();
-            newContact.BuddyNo =  etBuddyNo.getText().toString();
+            RDBMainDB db = App.getInstance().getDb();
+            int id = db.getDAO().getBuddyIdByNo(etBuddyNo.getText().toString());
+            REBuddy newContact = db.getDAO().getBuddyById(id);
+            if(newContact == null){
+                newContact = new REBuddy();
+                newContact.BuddyName =  etBuddyName.getText().toString();
+                newContact.BuddyNo =  etBuddyNo.getText().toString();
+                db.getDAO().insertBuddy(newContact);
+                App.getInstance().contacts.add(newContact);
+            }else{
+                if(newContact.BuddyName.equals("")){
+                    newContact.BuddyName = etBuddyName.getText().toString();
+                    db.getDAO().updateBuddy(newContact);
+                    App.getInstance().contacts.add(newContact);
+                }else{
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+                    alertDialogBuilder.setMessage("Већ постоји контакт са унетим бројем.");
+                    alertDialogBuilder.setNeutralButton("У реду", (d,t) ->{
+                        d.dismiss();
+                    });
+                    AlertDialog alertDialog = alertDialogBuilder.show();
+                }
+            }
 
-            App.getInstance().getDb().getDAO().insertBuddy(newContact);
-            App.contacts.add(newContact);
-            App.contacts.sort(Comparator.comparing(o -> o.BuddyName));
+
+
+            db.close();
+            App.getInstance().contacts.sort(Comparator.comparing(o -> o.BuddyName));
 
             return null;
         }
@@ -164,11 +187,12 @@ public class AddBuddyFragment extends Fragment{
                 e.printStackTrace();
             }*/
 
+            getActivity().getSupportFragmentManager().popBackStack("fragment_main", FragmentManager.POP_BACK_STACK_INCLUSIVE);
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragmentContainerView, MainFragment.class, null)
-                    .setReorderingAllowed(true)
                     .commit();
+
             pbarContainer.removeView(pbar);
 
             super.onPostExecute(unused);

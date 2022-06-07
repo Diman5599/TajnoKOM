@@ -2,13 +2,21 @@ package priv.dimitrije.tajnokom;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -18,6 +26,9 @@ import android.view.ViewGroup;
 public class ContactsFragment extends Fragment {
 
     private RecyclerView rvContacts;
+    private boolean editing;
+
+    private LinkedList<REBuddy> selectedContacts;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -59,16 +70,84 @@ public class ContactsFragment extends Fragment {
         }
     }
 
+    protected void deleteContacts() {
+        List<REBuddy> tempList = new LinkedList<>(selectedContacts);
+        toggleEditing();
+        App.getInstance().contacts.removeAll(tempList);
+        rvContacts.getAdapter().notifyDataSetChanged();
+        Thread deleteContactsThread = new Thread(() -> {
+            RDBMainDB db = App.getInstance().getDb();
+            db.getDAO().deleteBuddies(tempList);
+            db.close();
+        });
+        deleteContactsThread.start();
+    }
+
+    protected void toggleEditing(){
+        Menu mMenu = ((MainActivity) getActivity()).menu;
+        if(!editing) {
+            editing = true;
+            mMenu.removeItem(R.id.action_logout);
+            mMenu.removeItem(R.id.action_add_buddy);
+            getActivity().getMenuInflater().inflate(R.menu.edit_contacts_menu, mMenu);
+            for (int c = 0; c < rvContacts.getChildCount(); c++) {
+                ContactsRVAdapter.ViewHolder vh = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(c);
+
+                ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+                lp.horizontalBias = 0;
+
+                vh.cbSelectedContact.setLayoutParams(lp);
+                vh.cbSelectedContact.setVisibility(View.VISIBLE);
+            }
+        }else{
+            mMenu.removeItem(R.id.action_delete_contact);
+            mMenu.removeItem(R.id.action_cancel_contact_edit);
+            getActivity().getMenuInflater().inflate(R.menu.mainmenu, mMenu);
+            editing = false;
+            for (int c = 0; c < rvContacts.getAdapter().getItemCount(); c++) {
+                ContactsRVAdapter.ViewHolder vh = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(c);
+                ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(1, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+                lp.horizontalBias = 0;
+
+                vh.cbSelectedContact.setLayoutParams(lp);
+                vh.cbSelectedContact.setVisibility(View.INVISIBLE);
+                vh.cbSelectedContact.setChecked(false);
+            }
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        ((MainActivity) getActivity()).contactsFragment = this;
+
+        selectedContacts = new LinkedList<>();
+
         View root = inflater.inflate(R.layout.fragment_contacts, container, false);
 
         //kreiranje i popunjavanje recyclerview-a kontaktima
         rvContacts = root.findViewById(R.id.rvContacts);
-        rvContacts.setAdapter(new ContactsRVAdapter(App.contacts, this));
+        rvContacts.setAdapter(new ContactsRVAdapter(App.getInstance().contacts, this));
         rvContacts.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        editing = false;
+
         return root;
+    }
+
+    public boolean isEditig() {
+        return editing;
+    }
+
+    public void addContactToSelected(REBuddy reBuddy){
+        selectedContacts.add(reBuddy);
+    }
+
+    public void removeContactFromSelected(REBuddy reBuddy){
+        selectedContacts.remove(reBuddy);
+    }
+
+    public void clearSelectedContacts(){
+        selectedContacts.clear();
     }
 }

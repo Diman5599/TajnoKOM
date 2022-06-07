@@ -66,8 +66,7 @@ public class ChatFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_chat, container, false);
 
         rvChat = root.findViewById(R.id.rvChat);
-        ChatRVAdapter chatRVAdapter = new ChatRVAdapter(App.activeChats);
-        App.chatRVAdapter = chatRVAdapter;
+        ChatRVAdapter chatRVAdapter = new ChatRVAdapter(App.getInstance().activeChats);
         rvChat.setAdapter(chatRVAdapter);
         rvChat.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, true));
 

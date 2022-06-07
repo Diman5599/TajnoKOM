@@ -4,6 +4,7 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -33,6 +34,9 @@ public interface RDMainDbDAO {
     @Query("SELECT BuddyId FROM REBuddy WHERE BuddyNo = :no")
     int getBuddyIdByNo(String no);
 
+    @Update
+    void updateBuddy(REBuddy reBuddy);
+
     @Insert
     void insertBuddy(REBuddy buddy);
 
@@ -44,6 +48,9 @@ public interface RDMainDbDAO {
 
     @Delete
     void deleteBuddy(REBuddy buddy);
+
+    @Delete
+    void deleteBuddies(List<REBuddy> buddies);
 
     //messages
     @Query("SELECT * FROM (SELECT ROWID, MessageId, contactId, msgText, sent, read FROM REMessage WHERE contactId = :senderId ORDER BY ROWID DESC LIMIT :count) ORDER BY ROWID ASC")

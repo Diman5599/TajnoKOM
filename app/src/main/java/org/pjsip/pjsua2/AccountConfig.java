@@ -22,7 +22,7 @@ public class AccountConfig extends PersistentObject {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
-    delete();
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING ACCOUNTCONFIG!!!!!!!!!!!!!!!!!!!!!");    delete();
   }
 
   public synchronized void delete() {

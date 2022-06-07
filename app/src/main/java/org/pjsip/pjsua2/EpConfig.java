@@ -22,6 +22,7 @@ public class EpConfig extends PersistentObject {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING EPCONFIG!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

@@ -22,6 +22,7 @@ public class BuddyConfig extends PersistentObject {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING BUDDYCONFIG!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

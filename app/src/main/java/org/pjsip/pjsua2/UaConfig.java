@@ -22,6 +22,7 @@ public class UaConfig extends PersistentObject {
 
   @SuppressWarnings("deprecation")
   protected void finalize() {
+    System.out.println("!!!!!!!!!!!!!!!!!!!!FINALIZING UACONFIG!!!!!!!!!!!!!!!!!!!!!");
     delete();
   }
 

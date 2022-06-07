@@ -26,7 +26,7 @@
         <entry key="app/src/main/res/layout/chat_field.xml" value="0.5" />
         <entry key="app/src/main/res/layout/chatabar.xml" value="0.1" />
         <entry key="app/src/main/res/layout/chatbar.xml" value="0.5" />
-        <entry key="app/src/main/res/layout/contact_field.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/contact_field.xml" value="0.33" />
         <entry key="app/src/main/res/layout/content_main.xml" value="0.40931202223766505" />
         <entry key="app/src/main/res/layout/dialog_exit.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_add_buddy.xml" value="0.25" />
@@ -42,6 +42,7 @@
         <entry key="app/src/main/res/layout/msg_field.xml" value="0.3020833333333333" />
         <entry key="app/src/main/res/layout/msg_send.xml" value="0.1" />
         <entry key="app/src/main/res/menu/chatmenu.xml" value="0.14114583333333333" />
+        <entry key="app/src/main/res/menu/edit_contacts_menu.xml" value="0.13385416666666666" />
         <entry key="app/src/main/res/menu/edit_mode_menu.xml" value="0.31875" />
         <entry key="app/src/main/res/menu/mainmenu.xml" value="0.35572916666666665" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.213" />

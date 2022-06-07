@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.service.notification.StatusBarNotification;
 
@@ -28,40 +29,32 @@ import org.pjsip.pjsua2.pjsip_transport_type_e;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class App extends Service {
-    public static Context appContext;
 
     public Endpoint endpoint;
     public MyAccount usrAccount;
 
     public String domain;
+    public String username;
+    public String password;
 
     //Lista kontakata
-    public static List<REBuddy> contacts;
+    public List<REBuddy> contacts;
     //Lista postijecih razgovora
-    public static List<REBuddy> activeChats;
-
-    public static EpConfig epConfig ;
-    public static TransportConfig sipTpConfig;
+    public List<REBuddy> activeChats;
 
     public RDBMainDB mainDB = null;
-    public static AccountInfo accInfo;
-    public static AuthCredInfo aci;
-    public static TajniBuddy activeBuddy;
+    public AccountInfo accInfo;
+    public TajniBuddy activeBuddy;
 
     private static App instance = null;
-    private static App helpInstance = null;
-
-    public static ChatRVAdapter chatRVAdapter;
-
-    //public List<Object> pjTrash;
-
 
     //sadrzaj ceta u kome je korisnik trenutno, kako bi se azurirao pri stizanju poruke
-    public static LinkedList<REMessage> activeChatList;
+    public LinkedList<REMessage> activeChatList;
     //koji je kontakt u pitanju
-    public static int activeContactId;
+    public int activeContactId;
 
     private int notificationId = 2;
     private boolean logedin;
@@ -73,6 +66,13 @@ public class App extends Service {
 
     boolean logIn(RELogInCreds reLogInCreds){
         logedin = (new LogInManager()).logIn(reLogInCreds);
+
+        try {
+            endpoint.libRegisterThread(Thread.currentThread().getName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         if(logedin){
             Intent notificationIntent = new Intent(this, MainActivity.class);
 
@@ -171,9 +171,14 @@ public class App extends Service {
         msg.delete();
     }
 
+    public static Bundle logInLock;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //pjTrash = new LinkedList<>();
+        Bundle args = intent.getExtras();
+        domain = args.getString("domain");
+        password = args.getString("pass");
+        username = args.getString("user");
 
         initSipEndpoint(this);
 
@@ -199,7 +204,7 @@ public class App extends Service {
         DbTask dbTask = new DbTask();
         dbTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-        helpInstance = this;
+        instance = this;
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
                 .setSmallIcon(R.mipmap.tkomico)
@@ -209,7 +214,7 @@ public class App extends Service {
 
         startForeground(1, builder.build());
 
-        return Service.START_NOT_STICKY;
+        return Service.START_REDELIVER_INTENT;
     }
 
     public void logOut(){
@@ -218,13 +223,7 @@ public class App extends Service {
         }catch (NullPointerException e){
             System.out.println("NO ACTIVE BUDDY");
         }
-        try {
-            this.usrAccount.setRegistration(false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        this.usrAccount.shutdown();
-        this.usrAccount.delete();
+
         try {
             endpoint.libDestroy();
         } catch (Exception e) {
@@ -248,8 +247,7 @@ public class App extends Service {
 
     App(Context context){
         if(mainDB == null) {
-            appContext = context;
-            RDBMainDB db = Room.databaseBuilder(appContext, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
+            RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
             this.mainDB = db;
         }
     }
@@ -269,8 +267,6 @@ public class App extends Service {
     }
 
     public App initSipEndpoint(Context context){
-            appContext = context;
-
            // if(instance == null) {
                // instance = new App();
                 endpoint = new Endpoint();
@@ -281,8 +277,8 @@ public class App extends Service {
                     e.printStackTrace();
                 }
 
-                epConfig = new EpConfig();
-                sipTpConfig = new TransportConfig();
+                EpConfig epConfig = new EpConfig();
+                TransportConfig sipTpConfig = new TransportConfig();
 
                 sipTpConfig.setPort(50603);
 
@@ -305,8 +301,6 @@ public class App extends Service {
                 //pjTrash.add(epConfig);
                 uaConfig.delete();
                 epConfig.delete();
-                epConfig = null;
-
 
                 try {
                     endpoint.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TCP, sipTpConfig);
@@ -330,7 +324,7 @@ public class App extends Service {
         protected Void doInBackground(Void... voids) {
             try {
                 //registrovanje trenutne niti u okviru pjlib-a
-                App.getInstance().endpoint.libRegisterThread("logint");
+                instance.endpoint.libRegisterThread(Thread.currentThread().getName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -341,21 +335,30 @@ public class App extends Service {
                     logIn(creds.get(0));
                     App.domain = creds.get(0).domainName;
                 }*/
-                List<REBuddy> buddies = getDb().getDAO().getAllBuddies();
+                RDBMainDB db = getDb();
+                List<REBuddy> buddies = db.getDAO().getAllBuddies();
                 if(buddies.isEmpty()){
                     REBuddy b = new REBuddy();
                     b.BuddyName = "";
                     b.BuddyNo = "/";
                     getDb().getDAO().insertBuddy(b);
                 }
-                closeDb();
+                db.close();
+                RELogInCreds reLogInCreds = new RELogInCreds();
+                reLogInCreds.domainName = domain;
+                reLogInCreds.password = password;
+                reLogInCreds.username = username;
+
+                logIn(reLogInCreds);
             }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void unused) {
-            instance = helpInstance;
+            synchronized (logInLock) {
+                logInLock.notifyAll();
+            }
             super.onPostExecute(unused);
         }
     }
@@ -369,16 +372,31 @@ public class App extends Service {
         @Override
         protected OnInstantMessageParam doInBackground(OnInstantMessageParam[] params) {
             int contactId;
-            contactId = App.getInstance().getDb().getDAO()
-                    .getBuddyIdByNo(params[0].getFromUri()
-                            .substring(5, params[0].getFromUri().indexOf('@')));
+            RDBMainDB db = App.getInstance().getDb();
+            String num = params[0].getFromUri()
+                    .substring(5, params[0].getFromUri().indexOf('@'));
 
-            buddyName = App.getInstance().getDb().getDAO().getBuddyById(contactId).BuddyName;
+            contactId = db.getDAO()
+                    .getBuddyIdByNo(num);
+            App.getInstance().closeDb();
+
+            REBuddy buddy = db.getDAO().getBuddyById(contactId);
+
+            if(buddy == null){
+                buddy = new REBuddy();
+                buddy.BuddyName = "";
+                buddy.BuddyNo = num;
+                db.getDAO().insertBuddy(buddy);
+                contactId = db.getDAO().getBuddyIdByNo(num);
+            }else{
+                buddyName = buddy.BuddyName;
+            }
 
             receivedMessage.contactId = contactId;
-            App.getInstance().getDb().getDAO().insertMessage(receivedMessage);
+            db.getDAO().insertMessage(receivedMessage);
+            db.close();
 
-            if (contactId == App.activeContactId) {
+            if (contactId == activeContactId) {
                 activeChatList.add(receivedMessage);
             }
             return params[0];

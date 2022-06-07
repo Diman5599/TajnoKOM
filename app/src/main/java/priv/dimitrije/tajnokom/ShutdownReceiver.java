@@ -9,6 +9,8 @@ public class ShutdownReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         App.getInstance().logOut();
         App.getInstance().stopForeground(0);
+        Intent intent1 = new Intent(context, App.class);
+        context.stopService(intent1);
         System.exit(0);
     }
 }
