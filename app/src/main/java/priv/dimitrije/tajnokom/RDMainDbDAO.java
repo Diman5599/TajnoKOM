@@ -53,7 +53,7 @@ public interface RDMainDbDAO {
     void deleteBuddies(List<REBuddy> buddies);
 
     //messages
-    @Query("SELECT * FROM (SELECT ROWID, MessageId, contactId, msgText, sent, read FROM REMessage WHERE contactId = :senderId ORDER BY ROWID DESC LIMIT :count) ORDER BY ROWID ASC")
+    @Query("SELECT * FROM (SELECT ROWID, MessageId, contactId, msgText, sent, read, time FROM REMessage WHERE contactId = :senderId ORDER BY ROWID DESC LIMIT :count) ORDER BY ROWID ASC")
     List<REMessage> getMsgsFrom(int senderId, int count);
 
     @Insert

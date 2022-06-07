@@ -43,9 +43,9 @@ public class LogInActivity extends AppCompatActivity {
         pass = (EditText) findViewById(R.id.txtLozinka);
 
         //test parametri
-        host.setText("sip.linphone.org");
-        usr.setText("dim55");
-        pass.setText("Kolasinac0212");
+        host.setText("192.168.8.101");
+        usr.setText("Test");
+        pass.setText("100");
     }
 
     @Override

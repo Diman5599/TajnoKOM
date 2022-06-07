@@ -138,6 +138,11 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
                 }else{
                     contactsRVAdapter.fragment.removeContactFromSelected(contactsRVAdapter.localDataSet.get(this.getBindingAdapterPosition()));
                 }
+                if(contactsRVAdapter.fragment.getSelectedCount() == 1){
+                    contactsRVAdapter.fragment.addEditContactAction();
+                }else{
+                    contactsRVAdapter.fragment.removeEditContactAction();
+                }
             });
         }
 

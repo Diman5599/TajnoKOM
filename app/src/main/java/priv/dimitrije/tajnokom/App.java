@@ -1,11 +1,13 @@
 package priv.dimitrije.tajnokom;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,6 +29,10 @@ import org.pjsip.pjsua2.UaConfig;
 import org.pjsip.pjsua2.Version;
 import org.pjsip.pjsua2.pjsip_transport_type_e;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -86,7 +92,7 @@ public class App extends Service {
 
             NotificationCompat.Action action = new NotificationCompat.Action(null, "Заустави", stopFromNotificationIntent);
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "foreground_chan")
                     .setSmallIcon(R.mipmap.tkomico)
                     .setContentTitle("ТајноКОМ")
                     .setContentText("Пријављени сте на сервер " + domain)
@@ -110,6 +116,7 @@ public class App extends Service {
         receivedMessage.msgText = msg.getMsgBody();
         receivedMessage.sent = false;
         receivedMessage.read = false;
+        receivedMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
 
         //start task for writing
         WriteNewMessageTask writeTask = new WriteNewMessageTask();
@@ -166,7 +173,12 @@ public class App extends Service {
                     .addAction(rplyAction)
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-            notificationManager.notify(receivedMessage.contactId, builder.build());
+            Notification notification = builder.build();
+            notification.flags = Notification.FLAG_SHOW_LIGHTS;
+
+            notification.ledARGB = Color.BLUE;
+
+            notificationManager.notify(receivedMessage.contactId, notification);
         }
         msg.delete();
     }
@@ -185,10 +197,23 @@ public class App extends Service {
         activeChatList = new LinkedList<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "testchan";
-            String description = "test channel";
+            CharSequence name = "messages";
+            String description = "Message notif channel";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel("MsgChan", name, importance);
+            channel.setDescription(description);
+
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "foreground";
+            String description = "Foreground service notif channel";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("foreground_chan", name, importance);
             channel.setDescription(description);
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
@@ -206,7 +231,7 @@ public class App extends Service {
 
         instance = this;
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "foreground_chan")
                 .setSmallIcon(R.mipmap.tkomico)
                 .setContentTitle("ТајноКОМ")
                 .setContentText("Пријава у току...")
@@ -356,8 +381,10 @@ public class App extends Service {
 
         @Override
         protected void onPostExecute(Void unused) {
-            synchronized (logInLock) {
-                logInLock.notifyAll();
+            if(logInLock != null) {
+                synchronized (logInLock) {
+                    logInLock.notifyAll();
+                }
             }
             super.onPostExecute(unused);
         }

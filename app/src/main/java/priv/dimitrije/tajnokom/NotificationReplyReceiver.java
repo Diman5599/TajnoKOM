@@ -14,6 +14,10 @@ import androidx.core.app.NotificationCompat;
 import org.pjsip.pjsua2.BuddyConfig;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 public class NotificationReplyReceiver extends BroadcastReceiver{
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -94,6 +98,7 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
         reMessage.msgText = prm.getContent();
         reMessage.contactId = notificationId;
         reMessage.sent = true;
+        reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
 
         Thread writeMsgToDb = new Thread(() -> {
             App.getInstance().getDb().getDAO().insertMessage(reMessage);

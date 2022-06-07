@@ -21,6 +21,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -84,6 +87,12 @@ public class MessagesActivity extends AppCompatActivity {
         AsyncTask connectToBuddyTask = new AsyncTask() {
             @Override
             protected Object doInBackground(Object[] objects) {
+                try{
+                    App.getInstance().endpoint.libRegisterThread(Thread.currentThread().getName());
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
                 TajniBuddy buddy = new TajniBuddy();
                 bcfg = new MyBuddyCfg();
                 bcfg.setUri("sip:"+currentBuddyNo+"@"+App.getInstance().domain);
@@ -129,29 +138,6 @@ public class MessagesActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        try {
-            Object lock = new Object();
-
-            synchronized (lock) {
-                Thread setActiveContactIdThread = new Thread(() -> {
-                    int activeId;
-                    RDBMainDB db = App.getInstance().getDb();
-                    activeId = db.getDAO().getBuddyIdByNo(currentBuddyNo);
-                    App.getInstance().activeContactId = activeId;
-                    App.getInstance().activeChatList = new LinkedList<>(db.getDAO().getMsgsFrom(activeId, 20));
-                    db.close();
-                    synchronized (lock) {
-                        lock.notifyAll();
-                    }
-                });
-                setActiveContactIdThread.start();
-
-                lock.wait();
-            }
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         rvMessages = findViewById(R.id.rvMessages);
 
         etMessage = findViewById(R.id.etMessage);
@@ -178,6 +164,7 @@ public class MessagesActivity extends AppCompatActivity {
             reMessage.msgText = prm.getContent();
             reMessage.contactId = App.getInstance().activeContactId;
             reMessage.sent = true;
+            reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
 
             Thread writeMsgToDb = new Thread(() -> {
                 App.getInstance().getDb().getDAO().insertMessage(reMessage);
@@ -197,6 +184,31 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        try {
+            Object lock = new Object();
+
+            synchronized (lock) {
+                Thread setActiveContactIdThread = new Thread(() -> {
+                    int activeId;
+                    RDBMainDB db = App.getInstance().getDb();
+                    activeId = db.getDAO().getBuddyIdByNo(currentBuddyNo);
+                    App.getInstance().activeContactId = activeId;
+                    App.getInstance().activeChatList = new LinkedList<>(db.getDAO().getMsgsFrom(activeId, 20));
+                    db.close();
+                    synchronized (lock) {
+                        lock.notifyAll();
+                    }
+                });
+                setActiveContactIdThread.start();
+
+                lock.wait();
+            }
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         messagesRVAdapter = new MessagesRVAdapter(App.getInstance().activeChatList, this);
         rvMessages.setAdapter(messagesRVAdapter);
         rvMessages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
@@ -220,11 +232,12 @@ public class MessagesActivity extends AppCompatActivity {
 
                             @Override
                             protected void onPostExecute(Object o) {
+                                int diff = helperList.size() - App.getInstance().activeChatList.size();
                                 synchronized (App.getInstance().activeChatList) {
                                     App.getInstance().activeChatList.clear();
                                     App.getInstance().activeChatList.addAll(helperList);
                                 }
-                                messagesRVAdapter.notifyDataSetChanged();
+                                messagesRVAdapter. notifyItemRangeChanged(0, helperList.size());
                             }
                         };
                         getMoreMsgs.execute();

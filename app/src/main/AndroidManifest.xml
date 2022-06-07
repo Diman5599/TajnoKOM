@@ -41,7 +41,7 @@
         <activity
             android:name=".MessagesActivity"
             android:exported="true"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstance"
             android:windowSoftInputMode="adjustResize"
             android:parentActivityName=".MainActivity">
             <meta-data

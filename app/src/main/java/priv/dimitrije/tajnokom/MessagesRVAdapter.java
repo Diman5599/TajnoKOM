@@ -2,9 +2,12 @@ package priv.dimitrije.tajnokom;
 
 import android.annotation.SuppressLint;
 import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowMetrics;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -47,12 +50,16 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull MessagesRVAdapter.ViewHolder holder, int position) {
             holder.tvMsg.setText(msgs.get(position).msgText);
+            holder.tvMsg.setMaxWidth(75*holder.tvMsg.getContext().getResources().getDisplayMetrics().widthPixels/100);
+            holder.tvTime.setText(msgs.get(position).time);
             if (!msgs.get(position).sent) {
                 holder.tvMsg.setBackground(holder.tvMsg.getResources().getDrawable(R.drawable.message_bubble_receive, holder.tvMsg.getContext().getTheme()));
                 ((ConstraintLayout.LayoutParams) holder.tvMsg.getLayoutParams()).horizontalBias = 0;
+                ((ConstraintLayout.LayoutParams) holder.tvTime.getLayoutParams()).horizontalBias = 0.05f;
             }else{
                 holder.tvMsg.setBackground(holder.tvMsg.getResources().getDrawable(R.drawable.message_bubble_send, holder.tvMsg.getContext().getTheme()));
                 ((ConstraintLayout.LayoutParams) holder.tvMsg.getLayoutParams()).horizontalBias = 1;
+                ((ConstraintLayout.LayoutParams) holder.tvTime.getLayoutParams()).horizontalBias = 0.95f;
             }
 
 
@@ -116,6 +123,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
 
     public class ViewHolder extends RecyclerView.ViewHolder{
         TextView tvMsg;
+        TextView tvTime;
         ConstraintLayout body;
 
         boolean selected;
@@ -124,6 +132,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
             super(itemView);
             tvMsg = itemView.findViewById(R.id.tvMsg);
             body = (ConstraintLayout) itemView;
+            tvTime = itemView.findViewById(R.id.tvTime);
 
             selected = false;
         }

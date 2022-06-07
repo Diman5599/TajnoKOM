@@ -1,7 +1,6 @@
 package priv.dimitrije.tajnokom;
 
 import android.app.AlertDialog;
-import android.database.sqlite.SQLiteConstraintException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -15,7 +14,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
-import org.pjsip.pjsua2.BuddyConfig;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.Comparator;
 
@@ -82,6 +81,7 @@ public class AddBuddyFragment extends Fragment{
 
     private class AddBudyTask extends AsyncTask<Void, Void, Void>{
        // TajniBuddy buddy = null;
+        MaterialAlertDialogBuilder alertDialogBuilder = null;
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -116,12 +116,12 @@ public class AddBuddyFragment extends Fragment{
                     db.getDAO().updateBuddy(newContact);
                     App.getInstance().contacts.add(newContact);
                 }else{
-                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+                    alertDialogBuilder = new MaterialAlertDialogBuilder(getActivity());
                     alertDialogBuilder.setMessage("Већ постоји контакт са унетим бројем.");
                     alertDialogBuilder.setNeutralButton("У реду", (d,t) ->{
                         d.dismiss();
                     });
-                    AlertDialog alertDialog = alertDialogBuilder.show();
+
                 }
             }
 
@@ -186,6 +186,17 @@ public class AddBuddyFragment extends Fragment{
             } catch (Exception e) {
                 e.printStackTrace();
             }*/
+
+            if(alertDialogBuilder != null) {
+                etBuddyName.setEnabled(true);
+                etBuddyNo.setEnabled(true);
+                addBuddyButton.setEnabled(true);
+
+                pbarContainer.removeView(pbar);
+
+                alertDialogBuilder.show();
+                return;
+            }
 
             getActivity().getSupportFragmentManager().popBackStack("fragment_main", FragmentManager.POP_BACK_STACK_INCLUSIVE);
             getActivity().getSupportFragmentManager()

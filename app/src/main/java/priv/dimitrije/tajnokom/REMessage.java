@@ -4,6 +4,9 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 @Entity
 public class REMessage {
     @PrimaryKey(autoGenerate = true)
@@ -20,6 +23,9 @@ public class REMessage {
 
     @ColumnInfo(name = "read")
     public boolean read;
+
+    @ColumnInfo(name = "time")
+    public String time;
 
     public REMessage(){
         sent = true;

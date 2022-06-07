@@ -89,7 +89,9 @@ public class ContactsFragment extends Fragment {
             editing = true;
             mMenu.removeItem(R.id.action_logout);
             mMenu.removeItem(R.id.action_add_buddy);
+            mMenu.removeItem(R.id.action_edit_contact);
             getActivity().getMenuInflater().inflate(R.menu.edit_contacts_menu, mMenu);
+            getActivity().getMenuInflater().inflate(R.menu.edit_contact_id_helper, mMenu);
             for (int c = 0; c < rvContacts.getChildCount(); c++) {
                 ContactsRVAdapter.ViewHolder vh = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(c);
 
@@ -149,5 +151,17 @@ public class ContactsFragment extends Fragment {
 
     public void clearSelectedContacts(){
         selectedContacts.clear();
+    }
+
+    public int getSelectedCount(){
+        return selectedContacts.size();
+    }
+
+    public void removeEditContactAction(){
+        ((MainActivity)getActivity()).menu.removeItem(R.id.action_edit_contact);
+    }
+
+    public void addEditContactAction() {
+        getActivity().getMenuInflater().inflate(R.menu.edit_contact_id_helper, ((MainActivity) getActivity()).menu);
     }
 }
