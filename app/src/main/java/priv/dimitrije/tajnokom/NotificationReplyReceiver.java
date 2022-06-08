@@ -7,8 +7,10 @@ import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.service.notification.StatusBarNotification;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import org.pjsip.pjsua2.BuddyConfig;
@@ -17,8 +19,10 @@ import org.pjsip.pjsua2.SendInstantMessageParam;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class NotificationReplyReceiver extends BroadcastReceiver{
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void onReceive(Context context, Intent intent) {
         String msg = RemoteInput.getResultsFromIntent(intent).getString("REMOTE_MSG");
@@ -27,10 +31,19 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
         String buddyNo = intent.getExtras().getString("buddyNo");
         String buddyName = intent.getExtras().getString("buddName");
 
+        List<REMessage> unread =  App.getInstance().unreadMessages.get(App.getInstance().activeContactId);
+        if(unread != null) {
+            for(REMessage m : unread) m.read = true;
+            unread.clear();
+        }
+
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        NotificationCompat.MessagingStyle style = null;
+
+        Notification.MessagingStyle style = null;
         StatusBarNotification[] nots = notificationManager.getActiveNotifications();
         Notification n = null;
+
+
         for(StatusBarNotification s : nots){
             if(s.getId() == notificationId) {
                 n = s.getNotification();
@@ -38,9 +51,14 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
             }
         }
 
-        style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n);
-        NotificationCompat.MessagingStyle.Message message =
-                new NotificationCompat.MessagingStyle.Message(msg, Long.valueOf(java.time.LocalTime.now().toSecondOfDay()) , "Ја");
+        Notification.Builder updater = Notification.Builder.recoverBuilder(context, n);
+
+        style = (Notification.MessagingStyle) updater.getStyle();
+
+        Notification.MessagingStyle.Message message =
+                new Notification.MessagingStyle.Message(msg, Long.valueOf(java.time.LocalTime.now().toSecondOfDay()) , "Ја");
+
+        style.addMessage(message);
 
         Intent receivedMessageIntent = new Intent(context, MessagesActivity.class);
         receivedMessageIntent.putExtra("buddyName", buddyName);
@@ -48,29 +66,9 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 102, receivedMessageIntent, 0);
 
-        //*****Odgovarenje iz notifikacije****
-        androidx.core.app.RemoteInput remoteInput = new androidx.core.app.RemoteInput.Builder("REMOTE_MSG").setLabel("Унесите поруку...").build();
-
-        Intent replyIntent = new Intent(context, NotificationReplyReceiver.class);
-        replyIntent.putExtra("notification_id", notificationId);
-        replyIntent.putExtra("buddyName", buddyName);
-        replyIntent.putExtra("buddyNo", buddyNo);
-
-        replyIntent.getStringExtra("REMOTE_REPLY");
-        PendingIntent replyPendingIntent = PendingIntent.getBroadcast(context, 106, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Action.Builder rplyBuilder = new NotificationCompat.Action.Builder(null, "Одговори", replyPendingIntent)
-                .addRemoteInput(remoteInput)
-                .setAllowGeneratedReplies(true);
-
-        NotificationCompat.Action rplyAction = rplyBuilder.build();
-        //*********************************
-
-        NotificationCompat.Builder updater = new NotificationCompat.Builder(context, "MsgChan")
-                .setSmallIcon(R.mipmap.tkomico)
+        updater.setSmallIcon(R.mipmap.tkomico)
                 .setContentIntent(pendingIntent)
-                .setStyle(style.addMessage(message))
-                .addAction(rplyAction)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                .setStyle(style);
 
 
         //TODO: posalji poruku kontaktu

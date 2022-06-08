@@ -2,12 +2,13 @@ package priv.dimitrije.tajnokom;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-@Entity
+@Entity(foreignKeys =@ForeignKey(entity = REBuddy.class, parentColumns = "BuddyId", childColumns = "contactId"))
 public class REMessage {
     @PrimaryKey(autoGenerate = true)
     public int MessageId;

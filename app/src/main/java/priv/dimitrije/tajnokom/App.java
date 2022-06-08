@@ -15,12 +15,12 @@ import android.os.IBinder;
 import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.RemoteInput;
+import android.app.RemoteInput;
 import androidx.room.Room;
 
 import org.pjsip.pjsua2.AccountInfo;
-import org.pjsip.pjsua2.AuthCredInfo;
 import org.pjsip.pjsua2.Endpoint;
 import org.pjsip.pjsua2.EpConfig;
 import org.pjsip.pjsua2.OnInstantMessageParam;
@@ -29,13 +29,11 @@ import org.pjsip.pjsua2.UaConfig;
 import org.pjsip.pjsua2.Version;
 import org.pjsip.pjsua2.pjsip_transport_type_e;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 public class App extends Service {
 
@@ -65,6 +63,8 @@ public class App extends Service {
     private int notificationId = 2;
     private boolean logedin;
 
+    public HashMap<Integer, List<REMessage>> unreadMessages;
+
 
     public App(){
         logedin = false;
@@ -80,6 +80,8 @@ public class App extends Service {
         }
 
         if(logedin){
+            unreadMessages = new HashMap<>();
+
             Intent notificationIntent = new Intent(this, MainActivity.class);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
@@ -94,6 +96,7 @@ public class App extends Service {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "foreground_chan")
                     .setSmallIcon(R.mipmap.tkomico)
+                    .setColor(this.getColor(R.color.bordeaux))
                     .setContentTitle("ТајноКОМ")
                     .setContentText("Пријављени сте на сервер " + domain)
                     .setContentIntent(pendingIntent)
@@ -124,10 +127,13 @@ public class App extends Service {
     }
 
     private String buddyName;
+    @RequiresApi(api = Build.VERSION_CODES.P)
     private void finnishNotification(OnInstantMessageParam msg){
         if(MessagesRVAdapter.getInstance() != null) MessagesRVAdapter.notifyMe();
         else {
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+            notificationManager.cancel(receivedMessage.contactId);
 
             String buddyNo = msg.getFromUri().substring(5, msg.getFromUri().indexOf('@'));
             if (buddyName == null || buddyName.equals("")) buddyName = buddyNo;
@@ -136,19 +142,6 @@ public class App extends Service {
             receivedMessageIntent.putExtra("buddyNo", buddyNo);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 102, receivedMessageIntent, 0);
-
-            NotificationCompat.MessagingStyle.Message message =
-                    new NotificationCompat.MessagingStyle.Message(msg.getMsgBody(), Long.valueOf(java.time.LocalTime.now().toSecondOfDay()) ,buddyName);
-
-            NotificationCompat.MessagingStyle style = null;
-            StatusBarNotification[] nots = notificationManager.getActiveNotifications();
-            for(StatusBarNotification s : nots){
-                if(s.getId() == receivedMessage.contactId) {
-                    style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(s.getNotification());
-                    break;
-                }
-            }
-            if (style == null) style = new NotificationCompat.MessagingStyle(buddyName);
 
             //Odgovarenje iz notifikacije
             RemoteInput remoteInput = new RemoteInput.Builder("REMOTE_MSG").setLabel("Унесите поруку...").build();
@@ -159,24 +152,27 @@ public class App extends Service {
             replyIntent.putExtra("notification_id", receivedMessage.contactId);
             replyIntent.getStringExtra("REMOTE_REPLY");
             PendingIntent replyPendingIntent = PendingIntent.getBroadcast(this, 106, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-            NotificationCompat.Action.Builder rplyBuilder = new NotificationCompat.Action.Builder(null, "Одговори", replyPendingIntent)
+            Notification.Action.Builder rplyBuilder = new Notification.Action.Builder(null, "Одговори", replyPendingIntent)
                     .addRemoteInput(remoteInput)
                     .setAllowGeneratedReplies(true);
 
-            NotificationCompat.Action rplyAction = rplyBuilder.build();
+            Notification.Action rplyAction = rplyBuilder.build();
             //*********************************
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "MsgChan")
-                    .setSmallIcon(R.mipmap.tkomico)
+            Notification.MessagingStyle style = new Notification.MessagingStyle(buddyName);
+            for(REMessage m : unreadMessages.get(receivedMessage.contactId)){
+                Notification.MessagingStyle.Message styleMessage = new Notification.MessagingStyle.Message(m.msgText, LocalTime.now().getHour(), buddyName);
+                style.addMessage(styleMessage);
+            }
+
+            Notification.Builder builder = new Notification.Builder(this, "MsgChan").setSmallIcon(R.mipmap.tkomico)
+                    .setColor(this.getColor(R.color.bordeaux))
                     .setContentIntent(pendingIntent)
-                    .setStyle(style.addMessage(message))
                     .addAction(rplyAction)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                    .setStyle(style);
+
 
             Notification notification = builder.build();
-            notification.flags = Notification.FLAG_SHOW_LIGHTS;
-
-            notification.ledARGB = Color.BLUE;
 
             notificationManager.notify(receivedMessage.contactId, notification);
         }
@@ -199,8 +195,10 @@ public class App extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "messages";
             String description = "Message notif channel";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel("MsgChan", name, importance);
+            channel.enableLights(true);
+            channel.setLightColor(Color.GREEN);
             channel.setDescription(description);
 
             // Register the channel with the system; you can't change the importance
@@ -212,7 +210,7 @@ public class App extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "foreground";
             String description = "Foreground service notif channel";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel("foreground_chan", name, importance);
             channel.setDescription(description);
             // Register the channel with the system; you can't change the importance
@@ -233,6 +231,7 @@ public class App extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "foreground_chan")
                 .setSmallIcon(R.mipmap.tkomico)
+                .setColor(this.getColor(R.color.bordeaux))
                 .setContentTitle("ТајноКОМ")
                 .setContentText("Пријава у току...")
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
@@ -419,6 +418,9 @@ public class App extends Service {
                 buddyName = buddy.BuddyName;
             }
 
+            if (unreadMessages.get(contactId) == null) unreadMessages.put(contactId, new LinkedList<>());
+            unreadMessages.get(contactId).add(receivedMessage);
+
             receivedMessage.contactId = contactId;
             db.getDAO().insertMessage(receivedMessage);
             db.close();
@@ -429,6 +431,7 @@ public class App extends Service {
             return params[0];
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.P)
         @Override
         protected void onPostExecute(OnInstantMessageParam prm) {
             finnishNotification(prm);

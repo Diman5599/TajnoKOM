@@ -45,14 +45,21 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
         return new ViewHolder(view);
     }
 
-    private boolean firstReceivedFlag = false;
+    private boolean firstUnread = true;
     @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     public void onBindViewHolder(@NonNull MessagesRVAdapter.ViewHolder holder, int position) {
-            holder.tvMsg.setText(msgs.get(position).msgText);
-            holder.tvMsg.setMaxWidth(75*holder.tvMsg.getContext().getResources().getDisplayMetrics().widthPixels/100);
-            holder.tvTime.setText(msgs.get(position).time);
-            if (!msgs.get(position).sent) {
+        holder.tvMsg.setText(msgs.get(position).msgText);
+        holder.tvMsg.setMaxWidth(75*holder.tvMsg.getContext().getResources().getDisplayMetrics().widthPixels/100);
+        holder.tvTime.setText(msgs.get(position).time);
+
+        if((!msgs.get(position).read) && firstUnread){
+            holder.tvUnread.setVisibility(View.VISIBLE);
+            firstUnread = false;
+        }
+
+
+        if (!msgs.get(position).sent) {
                 holder.tvMsg.setBackground(holder.tvMsg.getResources().getDrawable(R.drawable.message_bubble_receive, holder.tvMsg.getContext().getTheme()));
                 ((ConstraintLayout.LayoutParams) holder.tvMsg.getLayoutParams()).horizontalBias = 0;
                 ((ConstraintLayout.LayoutParams) holder.tvTime.getLayoutParams()).horizontalBias = 0.05f;
@@ -85,6 +92,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
 
             holder.itemView.setOnLongClickListener(v -> {
                 if (!parentActivity.isEditing()){
+                    System.out.println("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVv " + v.getId() + " " + v);
                     holder.selected = true;
                     Drawable d = v.getResources().getDrawable(R.drawable.msg_hold_overlay, v.getContext().getTheme());
                     v.setForeground(d);
@@ -123,6 +131,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
 
     public class ViewHolder extends RecyclerView.ViewHolder{
         TextView tvMsg;
+        TextView tvUnread;
         TextView tvTime;
         ConstraintLayout body;
 
@@ -133,6 +142,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
             tvMsg = itemView.findViewById(R.id.tvMsg);
             body = (ConstraintLayout) itemView;
             tvTime = itemView.findViewById(R.id.tvTime);
+            tvUnread = itemView.findViewById(R.id.tvUnread);
 
             selected = false;
         }

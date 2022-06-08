@@ -61,4 +61,10 @@ public interface RDMainDbDAO {
 
     @Delete
     void deleteMessage(REMessage message);
-}
+
+    @Update
+    void updateMessages(List<REMessage> msgs);
+
+    @Query("SELECT * FROM REMessage WHERE read = 0")
+    List<REMessage> getUnread();
+    }

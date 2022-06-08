@@ -18,6 +18,7 @@ import org.pjsip.pjsua2.PresenceStatus;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 
 
@@ -33,6 +34,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.mainToolbar);
         setSupportActionBar(toolbar);
+
+        Thread test = new Thread(() -> {
+            RDBMainDB db = App.getInstance().getDb();
+
+            db.close();
+
+        });
+        test.start();
 
         boolean isIgnoringBatteryOptimizations = getSystemService(PowerManager.class).isIgnoringBatteryOptimizations(getPackageName());
         if(!isIgnoringBatteryOptimizations){

@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.pjsip.pjsua2.BuddyInfo;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
 import java.time.LocalDate;
@@ -100,15 +101,16 @@ public class MessagesActivity extends AppCompatActivity {
                 try {
                     buddy.create(App.getInstance().usrAccount, bcfg);
                     buddy.subscribePresence(true);
+                    BuddyInfo buddyInfo = buddy.getInfo();
                     int cnt = 0;
-                    while (buddy.getInfo().getPresStatus().getStatus() == 0 && cnt < 6){
+                    while (buddyInfo.getPresStatus().getStatus() == 0 && cnt < 6){
                         cnt++;
                     }
-                    buddyStatus = buddy.getInfo().getPresStatus().getStatus();
+                    buddyStatus = buddyInfo.getPresStatus().getStatus();
+                    buddyInfo.delete();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
                 bcfg.delete();
                 App.getInstance().activeBuddy = buddy;
                 return null;
@@ -185,6 +187,7 @@ public class MessagesActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+
         try {
             Object lock = new Object();
 
@@ -194,14 +197,13 @@ public class MessagesActivity extends AppCompatActivity {
                     RDBMainDB db = App.getInstance().getDb();
                     activeId = db.getDAO().getBuddyIdByNo(currentBuddyNo);
                     App.getInstance().activeContactId = activeId;
-                    App.getInstance().activeChatList = new LinkedList<>(db.getDAO().getMsgsFrom(activeId, 20));
+                    App.getInstance().activeChatList = new LinkedList<>(db.getDAO().getMsgsFrom(activeId, 50));
                     db.close();
                     synchronized (lock) {
                         lock.notifyAll();
                     }
                 });
                 setActiveContactIdThread.start();
-
                 lock.wait();
             }
 
@@ -216,7 +218,7 @@ public class MessagesActivity extends AppCompatActivity {
             LinearLayoutManager linearLayoutManager = (LinearLayoutManager)((RecyclerView) v).getLayoutManager();
             int pos = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
             if (pos <= 2){
-                    if(App.getInstance().activeChatList.size() >= 20) {
+                    if(App.getInstance().activeChatList.size() >= 50) {
                         AsyncTask getMoreMsgs = new AsyncTask() {
                             @Override
                             protected Object doInBackground(Object[] objects) {
@@ -224,7 +226,7 @@ public class MessagesActivity extends AppCompatActivity {
                                             .getDAO()
                                             .getMsgsFrom(
                                                     App.getInstance().activeContactId,
-                                                    App.getInstance().activeChatList.size() + 20
+                                                    App.getInstance().activeChatList.size() + 50
                                             );
                                     App.getInstance().closeDb();
                                     return null;
@@ -232,7 +234,6 @@ public class MessagesActivity extends AppCompatActivity {
 
                             @Override
                             protected void onPostExecute(Object o) {
-                                int diff = helperList.size() - App.getInstance().activeChatList.size();
                                 synchronized (App.getInstance().activeChatList) {
                                     App.getInstance().activeChatList.clear();
                                     App.getInstance().activeChatList.addAll(helperList);
@@ -248,7 +249,30 @@ public class MessagesActivity extends AppCompatActivity {
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancel(App.getInstance().activeContactId);
 
-        rvMessages.scrollToPosition(messagesRVAdapter.getItemCount()-1);
+        /*for(int cntr = App.getInstance().activeChatList.size()-1; cntr >= 0; cntr--){
+            if(cntr < 0) break;
+            if(App.getInstance().activeChatList.get(cntr).read){
+                rvMessages.scrollToPosition(cntr);
+            }
+        }*/
+
+        for(int cntr = App.getInstance().activeChatList.size()-1; cntr >= 0; cntr --){
+            if(cntr < 0) break;
+            if(App.getInstance().activeChatList.get(cntr).read){
+                rvMessages.scrollToPosition(cntr);
+                break;
+            }
+        }
+        Thread markRead = new Thread(() -> {
+            RDBMainDB db = App.getInstance().getDb();
+            List<REMessage> unread = db.getDAO().getUnread();
+            for(REMessage m : unread){
+                m.read = true;
+            }
+            db.getDAO().updateMessages(unread);
+            db.close();
+        });
+        markRead.start();
 
     }
 
