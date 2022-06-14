@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -34,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class App extends Service {
 
@@ -47,11 +47,11 @@ public class App extends Service {
     //Lista kontakata
     public List<REBuddy> contacts;
     //Lista postijecih razgovora
-    public List<REBuddy> activeChats;
+    public List<ActiveChatModel> activeChats;
 
     public RDBMainDB mainDB = null;
     public AccountInfo accInfo;
-    public TajniBuddy activeBuddy;
+    public MyBuddy activeBuddy;
 
     private static App instance = null;
 
@@ -119,7 +119,7 @@ public class App extends Service {
         receivedMessage.msgText = msg.getMsgBody();
         receivedMessage.sent = false;
         receivedMessage.read = false;
-        receivedMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        receivedMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
 
         //start task for writing
         WriteNewMessageTask writeTask = new WriteNewMessageTask();
@@ -423,6 +423,16 @@ public class App extends Service {
 
             receivedMessage.contactId = contactId;
             db.getDAO().insertMessage(receivedMessage);
+
+            final int id = contactId;
+            activeChats.removeIf(new Predicate<ActiveChatModel>() {
+                @Override
+                public boolean test(ActiveChatModel activeChatModel) {
+                    return activeChatModel.getContact().BuddyId == id;
+                }
+            });
+            activeChats.add(0, new ActiveChatModel(contactId, db));
+
             db.close();
 
             if (contactId == activeContactId) {
@@ -435,6 +445,7 @@ public class App extends Service {
         @Override
         protected void onPostExecute(OnInstantMessageParam prm) {
             finnishNotification(prm);
+            ChatRVAdapter.getInstance().notifyDataSetChanged();
         }
     }
 }

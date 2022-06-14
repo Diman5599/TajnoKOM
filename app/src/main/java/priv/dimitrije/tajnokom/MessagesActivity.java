@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -22,7 +23,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.pjsip.pjsua2.BuddyInfo;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class MessagesActivity extends AppCompatActivity {
     String currentBuddyName;
     String currentBuddyNo;
 
-    TextView tvChatContactStatus;
+    protected static TextView tvChatContactStatus;
 
     private MyBuddyCfg bcfg;
     private SendInstantMessageParam prm;
@@ -51,7 +51,7 @@ public class MessagesActivity extends AppCompatActivity {
 
     private Menu menu;
 
-    private String getStatus(int code){
+    protected static String getStatus(int code){
         String status = "Непознато";
         switch (code){
             case 0:
@@ -94,7 +94,7 @@ public class MessagesActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                TajniBuddy buddy = new TajniBuddy();
+                MyBuddy buddy = new MyBuddy();
                 bcfg = new MyBuddyCfg();
                 bcfg.setUri("sip:"+currentBuddyNo+"@"+App.getInstance().domain);
 
@@ -102,10 +102,10 @@ public class MessagesActivity extends AppCompatActivity {
                     buddy.create(App.getInstance().usrAccount, bcfg);
                     buddy.subscribePresence(true);
                     BuddyInfo buddyInfo = buddy.getInfo();
-                    int cnt = 0;
-                    while (buddyInfo.getPresStatus().getStatus() == 0 && cnt < 6){
-                        cnt++;
-                    }
+//                    int cnt = 0;
+//                    while (buddyInfo.getPresStatus().getStatus() == 0 && cnt < 6){
+//                        cnt++;
+//                    }
                     buddyStatus = buddyInfo.getPresStatus().getStatus();
                     buddyInfo.delete();
                 } catch (Exception e) {
@@ -166,7 +166,7 @@ public class MessagesActivity extends AppCompatActivity {
             reMessage.msgText = prm.getContent();
             reMessage.contactId = App.getInstance().activeContactId;
             reMessage.sent = true;
-            reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+            reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
 
             Thread writeMsgToDb = new Thread(() -> {
                 App.getInstance().getDb().getDAO().insertMessage(reMessage);
@@ -265,7 +265,7 @@ public class MessagesActivity extends AppCompatActivity {
         }
         Thread markRead = new Thread(() -> {
             RDBMainDB db = App.getInstance().getDb();
-            List<REMessage> unread = db.getDAO().getUnread();
+            List<REMessage> unread = db.getDAO().getUnread(App.getInstance().activeContactId);
             for(REMessage m : unread){
                 m.read = true;
             }

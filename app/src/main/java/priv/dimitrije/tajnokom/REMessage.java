@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-@Entity(foreignKeys =@ForeignKey(entity = REBuddy.class, parentColumns = "BuddyId", childColumns = "contactId"))
+@Entity(foreignKeys =@ForeignKey(entity = REBuddy.class, parentColumns = "BuddyId", childColumns = "contactId", onDelete = ForeignKey.RESTRICT))
 public class REMessage {
     @PrimaryKey(autoGenerate = true)
     public int MessageId;

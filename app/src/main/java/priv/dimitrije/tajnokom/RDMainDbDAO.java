@@ -28,6 +28,9 @@ public interface RDMainDbDAO {
     @Query("SELECT * FROM REBuddy WHERE BuddyId > 1")
     List<REBuddy> getAllBuddiesS();
 
+    @Query("SELECT BuddyId FROM REBuddy WHERE BuddyId > 1")
+    List<Integer> getAllBuddyIds();
+
     @Query("SELECT * FROM REBuddy WHERE BUddyID = :id")
     REBuddy getBuddyById(int id);
 
@@ -65,6 +68,19 @@ public interface RDMainDbDAO {
     @Update
     void updateMessages(List<REMessage> msgs);
 
-    @Query("SELECT * FROM REMessage WHERE read = 0")
-    List<REMessage> getUnread();
-    }
+    @Query("SELECT * FROM REMessage WHERE read = 0 AND contactId = :cId")
+    List<REMessage> getUnread(int cId);
+
+    @Query("SELECT * FROM REMessage WHERE contactId = :cId" +
+            " ORDER BY ROWID DESC LIMIT 1")
+    REMessage getLastMsgFromBuddy(int cId);
+
+    @Query("SELECT COUNT(MessageId) FROM REMessage WHERE read = 0 AND contactId = :cId")
+    int getUnreadCountFromBuddyId(int cId);
+
+    @Query("SELECT DISTINCT BuddyId FROM REBuddy INNER JOIN REMessage ON BuddyId = contactId WHERE BuddyId > 1")
+    List<Integer> getAllBuddyIdsWithMessages();
+
+    @Query("DELETE FROM REMessage WHERE contactId = :cId")
+    void deleteMessagesOfBuddy(int cId);
+}

@@ -34,6 +34,7 @@ class MyVP2Adapter extends FragmentStateAdapter {
         return fragment;
     }
 
+
     @Override
     public int getItemCount() {
         return 2;

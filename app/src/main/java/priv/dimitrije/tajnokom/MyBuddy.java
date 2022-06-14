@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import org.pjsip.pjsua2.Buddy;
 
-public class TajniBuddy extends Buddy {
+public class MyBuddy extends Buddy {
 
 
 
@@ -12,13 +12,8 @@ public class TajniBuddy extends Buddy {
     public void onBuddyState() {
         super.onBuddyState();
         try {
-            //proverava da li je server prihvatio da obradi zahtev
-            if (this.getInfo().getSubState() == 4) {
-                //obavestava nit koja ceka prihvatanje zahteva
-                synchronized (this){
-                    this.notify();
-                }
-            };
+            int status = this.getInfo().getPresStatus().getStatus();
+            if(MessagesActivity.tvChatContactStatus != null) MessagesActivity.tvChatContactStatus.setText(MessagesActivity.getStatus(status));
         } catch (Exception e) {
             e.printStackTrace();
         }

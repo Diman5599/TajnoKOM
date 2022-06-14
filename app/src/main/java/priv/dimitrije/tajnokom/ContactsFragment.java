@@ -1,5 +1,6 @@
 package priv.dimitrije.tajnokom;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -77,7 +79,10 @@ public class ContactsFragment extends Fragment {
         rvContacts.getAdapter().notifyDataSetChanged();
         Thread deleteContactsThread = new Thread(() -> {
             RDBMainDB db = App.getInstance().getDb();
-            db.getDAO().deleteBuddies(tempList);
+            for(REBuddy b : tempList){
+                b.BuddyName = "";
+                db.getDAO().updateBuddy(b);
+            }
             db.close();
         });
         deleteContactsThread.start();
@@ -117,7 +122,7 @@ public class ContactsFragment extends Fragment {
             }
         }
     }
-
+    ContactsFragment instance;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -126,15 +131,28 @@ public class ContactsFragment extends Fragment {
         selectedContacts = new LinkedList<>();
 
         View root = inflater.inflate(R.layout.fragment_contacts, container, false);
-
-        //kreiranje i popunjavanje recyclerview-a kontaktima
         rvContacts = root.findViewById(R.id.rvContacts);
-        rvContacts.setAdapter(new ContactsRVAdapter(App.getInstance().contacts, this));
-        rvContacts.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        instance = this;
         editing = false;
 
+        LoadContactsTask loadContactsTask = new LoadContactsTask();
+        loadContactsTask.execute();
+
         return root;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        Menu mMenu = ((MainActivity) getActivity()).menu;
+        mMenu.clear();
+        if(editing){
+            toggleEditing();
+        }
+        getActivity().getMenuInflater().inflate(R.menu.mainmenu, mMenu);
+
     }
 
     public boolean isEditig() {
@@ -163,5 +181,28 @@ public class ContactsFragment extends Fragment {
 
     public void addEditContactAction() {
         getActivity().getMenuInflater().inflate(R.menu.edit_contact_id_helper, ((MainActivity) getActivity()).menu);
+    }
+
+    public class LoadContactsTask extends AsyncTask{
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
+            //ucitavanje postojecih kontakata iz lokalne baze podataka
+            App.getInstance().contacts = App.getInstance().getDb().getDAO().getAllBuddiesS();
+            System.out.println(App.getInstance().contacts + " fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+            App.getInstance().contacts.removeIf(reBuddy -> reBuddy.BuddyName.equals(""));
+            App.getInstance().contacts.sort(Comparator.comparing(o -> o.BuddyName));
+            App.getInstance().closeDb();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            //kreiranje i popunjavanje recyclerview-a kontaktima
+            rvContacts.setAdapter(new ContactsRVAdapter(App.getInstance().contacts, instance));
+            rvContacts.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        }
     }
 }

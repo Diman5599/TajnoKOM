@@ -82,6 +82,7 @@ public class MainFragment extends Fragment {
 
         tabLayout = root.findViewById(R.id.tlMain);
         viewPager2 = root.findViewById(R.id.vpMain);
+
         viewPager2.setAdapter(myVP2Adapter);
 
         new TabLayoutMediator(tabLayout, viewPager2, (tab, position) -> {

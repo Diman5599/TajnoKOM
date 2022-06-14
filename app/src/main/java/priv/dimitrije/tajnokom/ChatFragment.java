@@ -1,5 +1,8 @@
 package priv.dimitrije.tajnokom;
 
+import android.app.ProgressDialog;
+import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,8 +10,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -16,8 +25,12 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class ChatFragment extends Fragment {
-
     private RecyclerView rvChat;
+    private boolean editing;
+
+    private ChatRVAdapter chatRVAdapter;
+
+    private List<ActiveChatModel> selectedChats;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -57,6 +70,26 @@ public class ChatFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        selectedChats = new LinkedList<>();
+    }
+
+    private ChatFragment chatFragment;
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        //helpers
+        editing = false;
+        chatFragment = this;
+
+        LoadActiveChatsTask task = new LoadActiveChatsTask();
+        task.execute();
+    }
+
+    public boolean isEditing(){
+        return editing;
     }
 
     @Override
@@ -66,10 +99,100 @@ public class ChatFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_chat, container, false);
 
         rvChat = root.findViewById(R.id.rvChat);
-        ChatRVAdapter chatRVAdapter = new ChatRVAdapter(App.getInstance().activeChats);
-        rvChat.setAdapter(chatRVAdapter);
-        rvChat.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, true));
+
+        ((MainActivity) getActivity()).chatFragment = this;
 
         return root;
+    }
+
+    public void addSelectedChats(ActiveChatModel activeChatModel){
+        selectedChats.add(activeChatModel);
+    }
+
+    public void removeSelectedChats(ActiveChatModel activeChatModel){
+        selectedChats.remove(activeChatModel);
+    }
+    public ProgressDialog progressDialog;
+    public void deleteChats() {
+        progressDialog = ProgressDialog.show(getContext(), "", "");
+        AsyncTask deleteChatsTask = new AsyncTask() {
+            @Override
+            protected Object doInBackground(Object[] objects) {
+                RDBMainDB db = App.getInstance().getDb();
+                for(ActiveChatModel acm : selectedChats){
+                    db.getDAO().deleteMessagesOfBuddy(acm.getContact().BuddyId);
+                }
+                db.close();
+                App.getInstance().activeChats.removeAll(selectedChats);
+                selectedChats.clear();
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Object o) {
+                progressDialog.dismiss();
+                chatRVAdapter.notifyDataSetChanged();
+            }
+        };
+        deleteChatsTask.execute();
+        toggleEditing();
+    }
+
+    public void toggleEditing(){
+        Menu mMenu = ((MainActivity) getActivity()).menu;
+        mMenu.clear();
+        if(editing){
+            editing = false;
+            getActivity().getMenuInflater().inflate(R.menu.mainmenu, mMenu);
+            chatRVAdapter.resetSelection();
+        }else{
+            editing = true;
+            getActivity().getMenuInflater().inflate(R.menu.edit_chats_menu, mMenu);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Menu mMenu = ((MainActivity) getActivity()).menu;
+        mMenu.clear();
+        if(editing){
+            toggleEditing();
+        }
+        getActivity().getMenuInflater().inflate(R.menu.mainmenu, mMenu);
+    }
+
+    private class LoadActiveChatsTask extends AsyncTask{
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            RDBMainDB db = App.getInstance().getDb();
+            List<Integer> buddyIds = db.getDAO().getAllBuddyIdsWithMessages();
+            List<ActiveChatModel> chats = new LinkedList<>();
+            for(int n = 0; n < buddyIds.size(); n++){
+                chats.add(new ActiveChatModel(buddyIds.get(n), db));
+            }
+            db.close();
+            chats.sort((o1, o2) ->
+            {
+                int diff = 0;
+                LocalTime t1 = LocalTime.from(DateTimeFormatter.ofPattern("HH:mm:ss:SSS").parse(o1.getLastMessage().time));
+                LocalTime t2 = LocalTime.from(DateTimeFormatter.ofPattern("HH:mm:ss:SSS").parse(o2.getLastMessage().time));
+                diff = t2.compareTo(t1);
+                return diff;
+            });
+            for(ActiveChatModel a : chats){
+                System.out.println(a);
+            }
+            App.getInstance().activeChats = chats;
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            chatRVAdapter = new ChatRVAdapter(App.getInstance().activeChats, chatFragment);
+            rvChat.setAdapter(chatRVAdapter);
+            rvChat.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+        }
+
     }
 }

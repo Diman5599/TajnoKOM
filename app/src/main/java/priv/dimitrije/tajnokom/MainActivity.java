@@ -16,8 +16,11 @@ import android.view.MenuItem;
 
 import org.pjsip.pjsua2.PresenceStatus;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -29,19 +32,20 @@ public class MainActivity extends AppCompatActivity {
     public ChatFragment chatFragment;
 
     @Override
+    public void onBackPressed() {
+        if(chatFragment.isEditing()){
+            chatFragment.toggleEditing();
+        }else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.mainToolbar);
         setSupportActionBar(toolbar);
-
-        Thread test = new Thread(() -> {
-            RDBMainDB db = App.getInstance().getDb();
-
-            db.close();
-
-        });
-        test.start();
 
         boolean isIgnoringBatteryOptimizations = getSystemService(PowerManager.class).isIgnoringBatteryOptimizations(getPackageName());
         if(!isIgnoringBatteryOptimizations){
@@ -51,25 +55,12 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, 10102);
         }
 
+        App.getInstance().activeChats = new LinkedList<>();
+        App.getInstance().contacts = new LinkedList<>();
+
         //fragmentView = findViewById(R.id.fragmentContainerView);
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentContainerView, new MainFragment()).commit();
 
-        loadContacts();
-    }
-
-    private void loadContacts() {
-        new Thread(
-                ()->{
-                    //zameniti ucitavanjem iz baze!!!!!!!!!!
-                    App.getInstance().activeChats = new ArrayList<>();
-
-                    //ucitavanje postojecih kontakata iz lokalne baze podataka
-                    App.getInstance().contacts = App.getInstance().getDb().getDAO().getAllBuddiesS();
-                    App.getInstance().contacts.removeIf(reBuddy -> reBuddy.BuddyName.equals(""));
-                    App.getInstance().contacts.sort(Comparator.comparing(o -> o.BuddyName));
-                    App.getInstance().closeDb();
-                }
-        ).start();
     }
 
     @Override
@@ -94,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_cancel_contact_edit:
                 contactsFragment.clearSelectedContacts();
                 contactsFragment.toggleEditing();
+                break;
+            case R.id.action_delete_chat:
+                chatFragment.deleteChats();
                 break;
             default:
                 break;

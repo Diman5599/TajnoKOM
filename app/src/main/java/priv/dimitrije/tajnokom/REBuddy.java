@@ -17,4 +17,7 @@ public class REBuddy implements Serializable {
 
     @ColumnInfo(name="BuddyNo")
     public String BuddyNo;
+
+    @ColumnInfo(name = "isSaved")
+    public boolean isSaved;
 }

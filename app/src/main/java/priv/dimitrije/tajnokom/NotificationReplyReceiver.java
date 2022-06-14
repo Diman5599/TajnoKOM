@@ -11,12 +11,10 @@ import android.os.Build;
 import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 
 import org.pjsip.pjsua2.BuddyConfig;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -26,7 +24,7 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
     @Override
     public void onReceive(Context context, Intent intent) {
         String msg = RemoteInput.getResultsFromIntent(intent).getString("REMOTE_MSG");
-        System.out.println("______________________________________________RECEUVED: " + msg);
+        System.out.println("______________________________________________RECEIVED: " + msg);
         int notificationId = intent.getExtras().getInt("notification_id");
         String buddyNo = intent.getExtras().getString("buddyNo");
         String buddyName = intent.getExtras().getString("buddName");
@@ -80,7 +78,7 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
 
         SendInstantMessageParam prm = new SendInstantMessageParam();
         prm.setContent(msg);
-        TajniBuddy bud = new TajniBuddy();
+        MyBuddy bud = new MyBuddy();
 
         try {
             BuddyConfig buddyConfig = new MyBuddyCfg();
@@ -96,7 +94,7 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
         reMessage.msgText = prm.getContent();
         reMessage.contactId = notificationId;
         reMessage.sent = true;
-        reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
 
         Thread writeMsgToDb = new Thread(() -> {
             App.getInstance().getDb().getDAO().insertMessage(reMessage);
