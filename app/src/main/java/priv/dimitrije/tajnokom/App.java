@@ -13,13 +13,17 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import android.app.RemoteInput;
 import androidx.room.Room;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import org.pjsip.pjsua2.AccountInfo;
+import org.pjsip.pjsua2.Call;
 import org.pjsip.pjsua2.Endpoint;
 import org.pjsip.pjsua2.EpConfig;
 import org.pjsip.pjsua2.OnInstantMessageParam;
@@ -36,7 +40,11 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class App extends Service {
+    private AESEncryptor encryptor;
 
+    public static Call activeCall;
+
+    public static int FAILED_STATUS;
     public Endpoint endpoint;
     public MyAccount usrAccount;
 
@@ -182,6 +190,8 @@ public class App extends Service {
     public static Bundle logInLock;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        activeCall = null;
+
         //pjTrash = new LinkedList<>();
         Bundle args = intent.getExtras();
         domain = args.getString("domain");
@@ -271,13 +281,13 @@ public class App extends Service {
 
     App(Context context){
         if(mainDB == null) {
-            RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
+            RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").build();
             this.mainDB = db;
         }
     }
 
     public RDBMainDB getDb(){
-        RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").fallbackToDestructiveMigration().build();
+        RDBMainDB db = Room.databaseBuilder(this, RDBMainDB.class, "tajnokomDb").build();
         this.mainDB = db;
         return mainDB;
     }
@@ -342,6 +352,10 @@ public class App extends Service {
         return instance;
     }
 
+    public AESEncryptor getEncryptor(){
+        return encryptor;
+    }
+
     public class DbTask extends AsyncTask<Void, Void, Void>{
 
         @Override
@@ -373,6 +387,8 @@ public class App extends Service {
                 reLogInCreds.password = password;
                 reLogInCreds.username = username;
 
+                encryptor = new AESEncryptor();
+
                 logIn(reLogInCreds);
             }
             return null;
@@ -396,9 +412,10 @@ public class App extends Service {
     class WriteNewMessageTask extends AsyncTask<OnInstantMessageParam, OnInstantMessageParam, OnInstantMessageParam> {
 
         @Override
-        protected OnInstantMessageParam doInBackground(OnInstantMessageParam[] params) {
+        protected OnInstantMessageParam doInBackground(OnInstantMessageParam... params) {
             int contactId;
             RDBMainDB db = App.getInstance().getDb();
+            System.out.println(params[0].getFromUri() + " PPPpppPPPPPppppPPPpppppPPPPppppPPPPppppPPPPppp");
             String num = params[0].getFromUri()
                     .substring(5, params[0].getFromUri().indexOf('@'));
 
@@ -425,13 +442,15 @@ public class App extends Service {
             db.getDAO().insertMessage(receivedMessage);
 
             final int id = contactId;
-            activeChats.removeIf(new Predicate<ActiveChatModel>() {
-                @Override
-                public boolean test(ActiveChatModel activeChatModel) {
-                    return activeChatModel.getContact().BuddyId == id;
-                }
-            });
-            activeChats.add(0, new ActiveChatModel(contactId, db));
+            if(activeChats != null) {
+                activeChats.removeIf(new Predicate<ActiveChatModel>() {
+                    @Override
+                    public boolean test(ActiveChatModel activeChatModel) {
+                        return activeChatModel.getContact().BuddyId == id;
+                    }
+                });
+                activeChats.add(0, new ActiveChatModel(contactId, db));
+            }
 
             db.close();
 

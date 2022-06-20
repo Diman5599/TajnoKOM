@@ -4,7 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/backgroundColor"
+    android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
+    android:focusable="true"
     android:hapticFeedbackEnabled="false"
     android:longClickable="true">
 
@@ -37,7 +40,9 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/tvChatInitials"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.111" />
+        app:layout_constraintVertical_bias="0.111"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        />
 
     <TextView
         android:id="@+id/tvLastMessage"
@@ -51,7 +56,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/tvChatInitials"
-        app:layout_constraintTop_toBottomOf="@+id/tvContactNm" />
+        app:layout_constraintTop_toBottomOf="@+id/tvContactNm"
+        android:textAppearance="?attr/textAppearanceSubtitle1"
+        />
 
     <TextView
         android:id="@+id/tvUnreadCount"
@@ -65,9 +72,10 @@
         app:layout_constraintHorizontal_bias="0.971"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.245" />
+        app:layout_constraintVertical_bias="0.245"
+        />
 
-    <Button
+    <!--<Button
         android:id="@+id/btnChatOverlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -77,7 +85,10 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.0" />-->
+
+    <!-- app:layout_constraintStart_toStartOf="@+id/btnChatOverlay"-->
+
 
     <ImageView
         android:id="@+id/ivCheck"
@@ -90,9 +101,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/tvLastMessage"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/btnChatOverlay"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.891"
         app:srcCompat="@drawable/ic_baseline_check_24" />
+
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:dividerInsetEnd="20dp"
+        app:dividerInsetStart="60dp"
+        app:dividerThickness="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

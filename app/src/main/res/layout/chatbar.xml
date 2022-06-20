@@ -9,12 +9,12 @@
 
     <TextView
         android:id="@+id/tvChatInitials"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginStart="2dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:background="@drawable/circle"
+        android:background="@drawable/small_circle"
         android:textColor="@color/white"
         android:textSize="25sp"
         android:textStyle="bold"
@@ -26,28 +26,29 @@
 
     <TextView
         android:id="@+id/tvChatContactNm"
-        android:layout_width="347dp"
-        android:layout_height="36dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:clickable="true"
         android:foregroundGravity="center_vertical"
         android:gravity="center_vertical"
-        android:textSize="20sp"
+        android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/tvChatInitials"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.205" />
 
     <TextView
         android:id="@+id/tvChatContactStatus"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:foregroundGravity="center_vertical"
         android:gravity="center_vertical"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

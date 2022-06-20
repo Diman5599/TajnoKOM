@@ -1,28 +1,32 @@
 package priv.dimitrije.tajnokom;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentContainerView;
 
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.pjsip.pjsua2.CallOpParam;
 import org.pjsip.pjsua2.PresenceStatus;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Predicate;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -30,6 +34,10 @@ public class MainActivity extends AppCompatActivity {
     public Menu menu;
     public ContactsFragment contactsFragment;
     public ChatFragment chatFragment;
+
+    EditText dialogEditText;
+
+    FloatingActionButton btnDial;
 
     @Override
     public void onBackPressed() {
@@ -55,11 +63,43 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, 10102);
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 10103);
+        }
+
         App.getInstance().activeChats = new LinkedList<>();
         App.getInstance().contacts = new LinkedList<>();
 
         //fragmentView = findViewById(R.id.fragmentContainerView);
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentContainerView, new MainFragment()).commit();
+
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        dialogBuilder.setTitle("Позовите број");
+        dialogEditText = new EditText(this);
+        dialogEditText.setInputType(InputType.TYPE_CLASS_TEXT);
+        dialogBuilder.setView(dialogEditText);
+
+        dialogBuilder.setPositiveButton("Позови", (dialog, which) -> {
+            MyCall call = new MyCall(App.getInstance().usrAccount);
+            CallOpParam callOpParam = new CallOpParam(true);
+            try {
+                String dstUri = "sip:" + dialogEditText.getText().toString() + "@" + App.getInstance().domain;
+                System.out.println(dstUri + "DDDDDDDDDDDDDDDDDdddddddddddddddddDDDDDDDDDDDDDDDDDDDdddddddddddddd");
+                call.makeCall(dstUri, callOpParam);
+                dialogEditText = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        dialogBuilder.setNegativeButton("Откажи", (dialog, which) ->{
+            dialogEditText = null;
+            dialog.dismiss();
+        });
+
+        btnDial = findViewById(R.id.btnDial);
+        btnDial.setOnClickListener(v -> {
+            dialogBuilder.create().show();
+        });
 
     }
 
@@ -105,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void logOut() {
         try {
+            App.getInstance().endpoint.libRegisterThread("logout");
+
             PresenceStatus presenceStatus = new PresenceStatus();
             presenceStatus.setActivity(0);
             try {
@@ -113,26 +155,12 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            App.getInstance().endpoint.libRegisterThread("logout");
             App.getInstance().usrAccount.shutdown();
         new Thread(()->{
-            try {
-                App.getInstance().endpoint.libRegisterThread("logout");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             RDBMainDB db = App.getInstance().getDb();
             db.getDAO().deleteLogin(db.getDAO().getAllLogins().get(0));
-            db.getDAO().deleteAllBuddies();
             db.close();
         }).start();
-        try {
-            App.getInstance().endpoint.libDestroy();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        App.getInstance().endpoint.delete();
-        App.getInstance().destroyInstance();
         Intent stopAppServiceIntent = new Intent(this, App.class);
         stopService(stopAppServiceIntent);
 

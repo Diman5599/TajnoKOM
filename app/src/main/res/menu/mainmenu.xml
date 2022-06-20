@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/action_add_buddy"
-        android:icon="@android:drawable/ic_menu_add"
+        android:icon="@drawable/ic_add_white_24dp"
         android:title="Додај контакт"
         app:showAsAction="ifRoom" />
 

@@ -64,11 +64,12 @@ public class LogInManager {
                     e.printStackTrace();
                 }
                 //ako se desi "Request merged" takodje povecati timeout cntr
-                if(App.getInstance().accInfo.getRegStatus() == 482) timeout++;
+                if(App.getInstance().accInfo.getRegStatus() != 200) timeout++;
                 Thread.sleep(2000);
                 App.getInstance().accInfo = App.getInstance().usrAccount.getInfo();
             }
             if (timeout >= 5 || App.getInstance().accInfo.getRegStatus() == 403){
+                App.FAILED_STATUS = App.getInstance().usrAccount.getInfo().getRegStatus();
                 App.getInstance().usrAccount.delete();
                 //App.getInstance().pjTrash.add(App.aci);
                 //App.getInstance().pjTrash.add(accfg);
@@ -83,6 +84,11 @@ public class LogInManager {
             aci = null;
             accfg.delete();
             return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            App.FAILED_STATUS = App.getInstance().usrAccount.getInfo().getRegStatus();
         } catch (Exception e) {
             e.printStackTrace();
         }

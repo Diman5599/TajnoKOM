@@ -1,12 +1,15 @@
 package priv.dimitrije.tajnokom;
 
-import android.content.Intent;
-
 import org.pjsip.pjsua2.Account;
 import org.pjsip.pjsua2.AccountInfo;
+import org.pjsip.pjsua2.Call;
+import org.pjsip.pjsua2.CallOpParam;
+import org.pjsip.pjsua2.OnIncomingCallParam;
 import org.pjsip.pjsua2.OnInstantMessageParam;
 import org.pjsip.pjsua2.OnInstantMessageStatusParam;
 import org.pjsip.pjsua2.OnRegStateParam;
+
+import java.util.Base64;
 
 public class MyAccount extends Account {
     public static final String ACTION_PJSIP_IM_RECEIVED = "pjsip_im_received";
@@ -31,6 +34,13 @@ public class MyAccount extends Account {
                  "\nOd: " + prm.getContactUri() + " | " + prm.getFromUri() +
                 "\nTekst: " + prm.getMsgBody()
         );
+        String msgText = prm.getMsgBody();
+        try{
+            Base64.getDecoder().decode(msgText);
+            prm.setMsgBody(App.getInstance().getEncryptor().decrypt(msgText));
+        }catch (Exception | Error e){
+            e.printStackTrace();
+        }
 
         App.getInstance().makeNotification(prm);
 
@@ -53,4 +63,21 @@ public class MyAccount extends Account {
         super.finalize();
         System.out.println("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF MyAccount finalized!\n");
     }
+
+    @Override
+    public void onIncomingCall(OnIncomingCallParam prm) {
+        super.onIncomingCall(prm);
+        Call call = new MyCall(this, prm.getCallId());
+        CallOpParam callOpParam = new CallOpParam(true);
+        callOpParam.setStatusCode(200);
+
+        App.activeCall = call;
+        try {
+            call.answer(callOpParam);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

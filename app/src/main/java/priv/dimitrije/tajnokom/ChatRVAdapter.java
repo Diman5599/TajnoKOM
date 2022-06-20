@@ -66,7 +66,7 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
         holder.tvUnreadCount.setText("" + chat.getUnreadCount());
 
         //otvori cet
-        holder.btnChatOverlay.setOnClickListener((v -> {
+        holder.itemView.setOnClickListener((v -> {
             if(!parentFragment.isEditing()) {
                 openThisChat(v, chat.getContact());
             }else{
@@ -87,7 +87,7 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
         }));
 
         //zapocni "edit" cetova
-        holder.btnChatOverlay.setOnLongClickListener(v -> {
+       holder.itemView.setOnLongClickListener(v -> {
             if(!parentFragment.isEditing()) {
                 selectedViewHolders.add(holder);
 
@@ -138,7 +138,7 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
         TextView tvContactName;
         TextView tvLastMessage;
         TextView tvUnreadCount;
-        Button btnChatOverlay;
+      //  Button btnChatOverlay;
         ImageView ivCheck;
 
         boolean selected;
@@ -152,7 +152,7 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
             tvChatInitials = itemView.findViewById(R.id.tvChatInitials);
             tvContactName = itemView.findViewById(R.id.tvContactNm);
             tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
-            btnChatOverlay = itemView.findViewById(R.id.btnChatOverlay);
+            //btnChatOverlay = itemView.findViewById(R.id.btnChatOverlay);
             ivCheck = itemView.findViewById(R.id.ivCheck);
         }
     }

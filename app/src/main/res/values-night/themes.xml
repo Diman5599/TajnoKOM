@@ -2,12 +2,12 @@
     <!-- Base application theme. -->
     <style name="TajnoKOM" parent="Theme.MaterialComponents.DayNight">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/blue</item>
-        <item name="colorPrimaryVariant">@color/bordeaux</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimary">@color/bordeaux</item>
+        <item name="colorPrimaryVariant">@color/pale_red</item>
+        <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/pale_red</item>
-        <item name="colorSecondaryVariant">@color/blue</item>
+        <item name="colorSecondary">@color/bordeaux</item>
+        <item name="colorSecondaryVariant">@color/pale_red</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">@color/pale_red</item>
@@ -16,9 +16,19 @@
         <item name="windowNoTitle">true</item>
         <item name="backgroundColor">@color/dark_gray</item>
 
+        <item name="colorOnSurface"> @color/white </item>
         <item name="floatingActionButtonStyle">@style/Widget.MaterialComponents.FloatingActionButton</item>
 
+        <item name="colorControlHighlight">@color/bordeaux</item>
     </style>
+
+    <style name="AppCompatAlertDialogStyle" parent="MaterialAlertDialog.Material3">
+        <item name="colorAccent">@color/pale_red</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:background">@color/dark_gray</item>
+    </style>
+
 
     <style name="TajnoKOM.NoActionBar">
         <item name="windowActionBar">false</item>

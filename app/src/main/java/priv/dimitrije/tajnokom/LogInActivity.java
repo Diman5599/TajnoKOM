@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.pjsip.pjsua2.AccountInfo;
 
@@ -19,6 +20,10 @@ import java.util.regex.Pattern;
 
 public class LogInActivity extends AppCompatActivity {
     private boolean loggedIn = false;
+
+    TextInputLayout tilHost;
+    TextInputLayout tilUser;
+    TextInputLayout tilPassword;
 
     EditText host;
     EditText usr;
@@ -38,13 +43,21 @@ public class LogInActivity extends AppCompatActivity {
         Button btnPrijava = (Button) findViewById(R.id.btnPrijava);
         btnPrijava.setOnClickListener(v -> requestRegistration(v));
 
-        host = (EditText) findViewById(R.id.txtHost);
-        usr = (EditText) findViewById(R.id.txtKorisnik);
-        pass = (EditText) findViewById(R.id.txtLozinka);
+        host =  findViewById(R.id.txtHost);
+        usr =  findViewById(R.id.txtKorisnik);
+        pass =  findViewById(R.id.txtLozinka);
+
+        tilHost = findViewById(R.id.tilHost);
+        tilUser = findViewById(R.id.tilUser);
+        tilPassword = findViewById(R.id.tilPassword);
+
+        tilPassword.getLayoutParams().width = 85*getResources().getDisplayMetrics().widthPixels/100;
+        tilHost.getLayoutParams().width = 85*getResources().getDisplayMetrics().widthPixels/100;
+        tilUser.getLayoutParams().width = 85*getResources().getDisplayMetrics().widthPixels/100;
 
         //test parametri
-        host.setText("192.168.8.101");
-        usr.setText("Test");
+        host.setText("192.168.8.100");
+        usr.setText("100");
         pass.setText("100");
     }
 
@@ -75,7 +88,14 @@ public class LogInActivity extends AppCompatActivity {
         extension = usr.getText().toString();
         passw = pass.getText().toString();
 
-        progressDialog = ProgressDialog.show(LogInActivity.this, "", "Пријављивање...", true);
+        progressDialog = new ProgressDialog(this, R.style.AppCompatAlertDialogStyle);
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Пријављивање...");
+        progressDialog.setIndeterminate(true);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setProgressNumberFormat(null);
+        progressDialog.setProgressPercentFormat(null);
+        progressDialog.show();
 
         if(Pattern.matches(".*\\p{InCyrillic}.*", extension) || Pattern.matches(".*\\p{InCyrillic}.*", extension) || Pattern.matches(".*\\p{InCyrillic}.*", extension)){
             progressDialog.dismiss();
@@ -195,16 +215,12 @@ public class LogInActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else {
 
-                    //ukloni servis
-                    Intent stopAppServiceIntent = new Intent(getApplicationContext(), App.class);
-                    App.getInstance().destroyInstance();
-                    stopService(stopAppServiceIntent);
 
                     //neuspela prijava
                     String msg = null;
-                    switch (App.getInstance().accInfo.getRegStatus()){
+                    switch (App.FAILED_STATUS){
                         case SipConstants.SERVER_NOT_RESPONDING:
-                            msg = "Сервер се не одазива (" + App.getInstance().accInfo.getRegStatus() + ")";
+                            msg = "Сервер се не одазива (" + App.FAILED_STATUS + ")";
                             break;
                         case SipConstants.WRONG_PASSWORD_OR_USER:
                             msg = "Погрешна шифра или корисничко име.\nПокушајте поново.";
@@ -217,7 +233,12 @@ public class LogInActivity extends AppCompatActivity {
                             msg = "Грешка, покушајте поново.";
                     }
 
-                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(LogInActivity.this);
+                    //ukloni servis
+                    Intent stopAppServiceIntent = new Intent(getApplicationContext(), App.class);
+                    App.getInstance().destroyInstance();
+                    stopService(stopAppServiceIntent);
+
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(LogInActivity.this, R.style.MaterialAlertDialog_Material3);
                     alertDialogBuilder.setMessage(msg);
                     alertDialogBuilder.setNeutralButton("У реду", (d,v) ->{
                         d.dismiss();
@@ -232,6 +253,8 @@ public class LogInActivity extends AppCompatActivity {
                     d.dismiss();
                 });
                 AlertDialog alertDialog = alertDialogBuilder.show();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }

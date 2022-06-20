@@ -8,17 +8,20 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.pjsip.pjsua2.BuddyInfo;
 import org.pjsip.pjsua2.SendInstantMessageParam;
@@ -36,6 +39,8 @@ public class MessagesActivity extends AppCompatActivity {
     RecyclerView rvMessages;
     FloatingActionButton btnSend;
     EditText etMessage;
+    TextInputLayout etMessageLayout;
+    DrawerLayout drawerLayout;
 
     String currentBuddyName;
     String currentBuddyNo;
@@ -141,8 +146,8 @@ public class MessagesActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         rvMessages = findViewById(R.id.rvMessages);
-
         etMessage = findViewById(R.id.etMessage);
+        etMessageLayout = findViewById(R.id.etMessageLayout);
 
         btnSend = findViewById(R.id.btnSend);
         btnSend.setOnClickListener((v -> {
@@ -152,8 +157,11 @@ public class MessagesActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            String cleartextMessageContent = etMessage.getText().toString();
+            String encryptedMessageContent = App.getInstance().getEncryptor().encrypt(cleartextMessageContent);
+
             prm = new SendInstantMessageParam();
-            prm.setContent(etMessage.getText().toString());
+            prm.setContent(encryptedMessageContent);
 
             etMessage.setText(null);
 
@@ -163,7 +171,7 @@ public class MessagesActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             REMessage reMessage = new REMessage();
-            reMessage.msgText = prm.getContent();
+            reMessage.msgText = cleartextMessageContent;
             reMessage.contactId = App.getInstance().activeContactId;
             reMessage.sent = true;
             reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
@@ -180,6 +188,32 @@ public class MessagesActivity extends AppCompatActivity {
 
             prm.delete();
         }));
+
+
+
+        etMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(s.toString().equals("")){
+                    btnSend.setEnabled(false);
+                }else{
+                    btnSend.setEnabled(true);
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        etMessage.setOnFocusChangeListener((v, hasFocus) -> {
+            if(hasFocus){
+                etMessageLayout.setHint("");
+            }else{
+                if(etMessage.getText().toString().equals(""))
+                    etMessageLayout.setHint("Унесите поруку...");
+            }
+        });
     }
 
     List<REMessage> helperList;
@@ -249,12 +283,6 @@ public class MessagesActivity extends AppCompatActivity {
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancel(App.getInstance().activeContactId);
 
-        /*for(int cntr = App.getInstance().activeChatList.size()-1; cntr >= 0; cntr--){
-            if(cntr < 0) break;
-            if(App.getInstance().activeChatList.get(cntr).read){
-                rvMessages.scrollToPosition(cntr);
-            }
-        }*/
 
         for(int cntr = App.getInstance().activeChatList.size()-1; cntr >= 0; cntr --){
             if(cntr < 0) break;
@@ -271,6 +299,8 @@ public class MessagesActivity extends AppCompatActivity {
             }
             db.getDAO().updateMessages(unread);
             db.close();
+            List<REMessage> activeUnread = App.getInstance().unreadMessages.get(App.getInstance().activeContactId);
+            if(activeUnread != null) activeUnread.clear();
         });
         markRead.start();
 
@@ -279,7 +309,7 @@ public class MessagesActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
-        getMenuInflater().inflate(R.menu.chatmenu, menu);
+        getMenuInflater().inflate(R.menu.open_drawer_action, menu);
         return true;
     }
 
@@ -358,6 +388,9 @@ public class MessagesActivity extends AppCompatActivity {
             case R.id.action_contact_details:
                 //TODO: Prikazi detalje kontakta
 
+                break;
+            case R.id.action_open_drawer:
+                drawerLayout.open();
                 break;
             default:
                 break;
