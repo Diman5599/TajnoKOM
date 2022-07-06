@@ -14,6 +14,8 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
@@ -155,7 +157,11 @@ public class ChatFragment extends Fragment {
     public void onPause() {
         super.onPause();
         Menu mMenu = ((MainActivity) getActivity()).menu;
-        mMenu.clear();
+        try{
+            mMenu.clear();
+        }catch (NullPointerException e){
+            e.printStackTrace();
+        }
         if(editing){
             toggleEditing();
         }
@@ -174,14 +180,14 @@ public class ChatFragment extends Fragment {
             db.close();
             chats.sort((o1, o2) ->
             {
-                int diff = 0;
-                LocalTime t1 = LocalTime.from(DateTimeFormatter.ofPattern("HH:mm:ss:SSS").parse(o1.getLastMessage().time));
-                LocalTime t2 = LocalTime.from(DateTimeFormatter.ofPattern("HH:mm:ss:SSS").parse(o2.getLastMessage().time));
+                int diff;
+                LocalDateTime t1 = LocalDateTime.from(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss:SSS").parse(o1.getLastMessage().time));
+                LocalDateTime t2 = LocalDateTime.from(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss:SSS").parse(o2.getLastMessage().time));
                 diff = t2.compareTo(t1);
                 return diff;
             });
             for(ActiveChatModel a : chats){
-                System.out.println(a);
+                System.out.println(a + " | " + a.getLastMessage().time);
             }
             App.getInstance().activeChats = chats;
             return null;

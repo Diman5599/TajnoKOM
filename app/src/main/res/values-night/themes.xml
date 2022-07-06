@@ -4,15 +4,15 @@
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/bordeaux</item>
         <item name="colorPrimaryVariant">@color/pale_red</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/bordeaux</item>
         <item name="colorSecondaryVariant">@color/pale_red</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorOnSecondary">@color/very_light_gray</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">@color/pale_red</item>
         <!-- Customize your theme here. -->
-        <item name="windowActionBar">false</item>
+
         <item name="windowNoTitle">true</item>
         <item name="backgroundColor">@color/dark_gray</item>
 
@@ -22,11 +22,11 @@
         <item name="colorControlHighlight">@color/bordeaux</item>
     </style>
 
-    <style name="AppCompatAlertDialogStyle" parent="MaterialAlertDialog.Material3">
+    <style name="AppCompatAlertDialogStyle" parent="Theme.AppCompat.DayNight.Dialog">
         <item name="colorAccent">@color/pale_red</item>
         <item name="android:windowFullscreen">false</item>
-        <item name="android:textColorPrimary">@color/white</item>
-        <item name="android:background">@color/dark_gray</item>
+        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>
+        <item name="android:background">?attr/backgroundColor</item>
     </style>
 
 

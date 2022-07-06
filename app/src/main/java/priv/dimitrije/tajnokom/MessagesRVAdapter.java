@@ -51,7 +51,7 @@ public class MessagesRVAdapter extends RecyclerView.Adapter<MessagesRVAdapter.Vi
     public void onBindViewHolder(@NonNull MessagesRVAdapter.ViewHolder holder, int position) {
         holder.tvMsg.setText(msgs.get(position).msgText);
         holder.tvMsg.setMaxWidth(75*holder.tvMsg.getContext().getResources().getDisplayMetrics().widthPixels/100);
-        holder.tvTime.setText(msgs.get(position).time.substring(0,5));
+        holder.tvTime.setText(msgs.get(position).time.substring(11,16));
 
         if((!msgs.get(position).read) && firstUnread){
             holder.tvUnread.setVisibility(View.VISIBLE);

@@ -11,5 +11,7 @@
     <color name="blue_transparent">#6A30B3EE</color>
     <color name="transparency">#003C3838</color>
     <color name="very_light_gray">#BDBDBD</color>
+    <color name="transparent_red" />
+    <color name="red_transparent">#7EB33A31</color>
 
 </resources>

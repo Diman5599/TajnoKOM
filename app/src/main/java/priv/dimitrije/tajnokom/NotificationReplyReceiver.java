@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi;
 import org.pjsip.pjsua2.BuddyConfig;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -94,7 +95,7 @@ public class NotificationReplyReceiver extends BroadcastReceiver{
         reMessage.msgText = prm.getContent();
         reMessage.contactId = notificationId;
         reMessage.sent = true;
-        reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
+        reMessage.time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss:SSS"));
 
         Thread writeMsgToDb = new Thread(() -> {
             App.getInstance().getDb().getDAO().insertMessage(reMessage);

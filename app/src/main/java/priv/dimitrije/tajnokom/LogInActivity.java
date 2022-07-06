@@ -14,8 +14,6 @@ import android.widget.EditText;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.pjsip.pjsua2.AccountInfo;
-
 import java.util.regex.Pattern;
 
 public class LogInActivity extends AppCompatActivity {
@@ -24,6 +22,8 @@ public class LogInActivity extends AppCompatActivity {
     TextInputLayout tilHost;
     TextInputLayout tilUser;
     TextInputLayout tilPassword;
+
+    Button btnPrijava;
 
     EditText host;
     EditText usr;
@@ -40,20 +40,22 @@ public class LogInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
 
-        Button btnPrijava = (Button) findViewById(R.id.btnPrijava);
+        btnPrijava = (Button) findViewById(R.id.btnPrijava);
         btnPrijava.setOnClickListener(v -> requestRegistration(v));
 
         host =  findViewById(R.id.txtHost);
         usr =  findViewById(R.id.txtKorisnik);
-        pass =  findViewById(R.id.txtLozinka);
+        pass =  findViewById(R.id.tvDetailsContactNumber);
 
         tilHost = findViewById(R.id.tilHost);
         tilUser = findViewById(R.id.tilUser);
-        tilPassword = findViewById(R.id.tilPassword);
+        tilPassword = findViewById(R.id.tillContactNumber);
 
-        tilPassword.getLayoutParams().width = 85*getResources().getDisplayMetrics().widthPixels/100;
-        tilHost.getLayoutParams().width = 85*getResources().getDisplayMetrics().widthPixels/100;
-        tilUser.getLayoutParams().width = 85*getResources().getDisplayMetrics().widthPixels/100;
+        int viewsWidth = 85*getResources().getDisplayMetrics().widthPixels/100;
+        tilPassword.getLayoutParams().width = viewsWidth;
+        tilHost.getLayoutParams().width = viewsWidth;
+        tilUser.getLayoutParams().width = viewsWidth;
+        btnPrijava.getLayoutParams().width = viewsWidth;
 
         //test parametri
         host.setText("192.168.8.100");

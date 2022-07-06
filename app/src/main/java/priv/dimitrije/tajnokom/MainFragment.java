@@ -89,10 +89,8 @@ public class MainFragment extends Fragment {
 
         }).attach();
 
-        tabLayout.getTabAt(0).setIcon(R.drawable.ic_baseline_comment_24);
-
-        tabLayout.getTabAt(1).setIcon(R.drawable.ic_baseline_contacts_24);
-
+        tabLayout.getTabAt(0).setText("Ћаскања");
+        tabLayout.getTabAt(1).setText("Контакти");
 
         return root;
     }

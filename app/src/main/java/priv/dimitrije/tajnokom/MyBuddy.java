@@ -3,6 +3,7 @@ package priv.dimitrije.tajnokom;
 import androidx.annotation.NonNull;
 
 import org.pjsip.pjsua2.Buddy;
+import org.pjsip.pjsua2.BuddyInfo;
 
 public class MyBuddy extends Buddy {
 
@@ -12,8 +13,10 @@ public class MyBuddy extends Buddy {
     public void onBuddyState() {
         super.onBuddyState();
         try {
-            int status = this.getInfo().getPresStatus().getStatus();
+            BuddyInfo info = this.getInfo();
+            int status = info.getPresStatus().getStatus();
             if(MessagesActivity.tvChatContactStatus != null) MessagesActivity.tvChatContactStatus.setText(MessagesActivity.getStatus(status));
+            info.delete();
         } catch (Exception e) {
             e.printStackTrace();
         }

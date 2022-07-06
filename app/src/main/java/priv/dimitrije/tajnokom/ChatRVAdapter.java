@@ -107,8 +107,9 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
 
         intent.putExtra("buddyName", reBuddy.BuddyName);
         intent.putExtra("buddyNo", reBuddy.BuddyNo);
+        intent.putExtra("buddyId", reBuddy.BuddyId);
 
-        v.getContext().startActivity(intent);
+        this.parentFragment.getContext().startActivity(intent);
     }
 
     private String getInitials(String contact) {
@@ -152,7 +153,6 @@ public class ChatRVAdapter extends RecyclerView.Adapter<ChatRVAdapter.ViewHolder
             tvChatInitials = itemView.findViewById(R.id.tvChatInitials);
             tvContactName = itemView.findViewById(R.id.tvContactNm);
             tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
-            //btnChatOverlay = itemView.findViewById(R.id.btnChatOverlay);
             ivCheck = itemView.findViewById(R.id.ivCheck);
         }
     }

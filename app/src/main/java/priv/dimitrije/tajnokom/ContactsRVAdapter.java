@@ -16,21 +16,27 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.codecomputerlove.fastscrollrecyclerviewdemo.FastScrollRecyclerViewInterface;
+
+import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.ViewHolder> {
+public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.ViewHolder> implements FastScrollRecyclerViewInterface {
 
     private List<REBuddy> localDataSet;
     private Map<View, Integer> buttonMap;
     private ContactsFragment fragment;
+    private LinkedHashMap<String, Integer> mIndexMap;
 
     //dataSet - trenutna lista kontakata
-    public ContactsRVAdapter(List<REBuddy> dataSet, ContactsFragment callingFragment){
+    public ContactsRVAdapter(List<REBuddy> dataSet, LinkedHashMap<String, Integer> indexMapping, ContactsFragment callingFragment){
         localDataSet = dataSet;
         buttonMap = new HashMap<>();
         this.fragment = callingFragment;
+        this.mIndexMap = indexMapping;
     }
 
     @NonNull
@@ -60,16 +66,17 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
     }
 
     private void openChat(REBuddy buddy){
-        Intent msgActivityIntent = new Intent(this.fragment.getActivity(), MessagesActivity.class);
+        Intent msgsActivityIntent = new Intent(this.fragment.getActivity(), MessagesActivity.class);
 
-        msgActivityIntent.putExtra("buddyName", buddy.BuddyName);
-        msgActivityIntent.putExtra("buddyNo", buddy.BuddyNo);
 
-        this.fragment.getActivity().startActivityFromFragment(this.fragment, msgActivityIntent,101);
+        msgsActivityIntent.putExtra("buddyName", buddy.BuddyName);
+        msgsActivityIntent.putExtra("buddyNo", buddy.BuddyNo);
+        msgsActivityIntent.putExtra("buddyId", buddy.BuddyId);
 
+        this.fragment.getActivity().startActivityFromFragment(this.fragment, msgsActivityIntent,101);
     }
 
-    private String getInitials(String contact) {
+    public static String getInitials(String contact) {
         String[] names = contact.split(" ", 2);
 
         String result = "";
@@ -83,6 +90,11 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
     @Override
     public int getItemCount() {
         return localDataSet.size();
+    }
+
+    @Override
+    public HashMap<String, Integer> getMapIndex() {
+        return mIndexMap;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
@@ -138,11 +150,7 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
                 }else{
                     contactsRVAdapter.fragment.removeContactFromSelected(contactsRVAdapter.localDataSet.get(this.getBindingAdapterPosition()));
                 }
-                if(contactsRVAdapter.fragment.getSelectedCount() == 1){
-                    contactsRVAdapter.fragment.addEditContactAction();
-                }else{
-                    contactsRVAdapter.fragment.removeEditContactAction();
-                }
+
             });
         }
 

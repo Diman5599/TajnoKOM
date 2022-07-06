@@ -31,7 +31,7 @@ public interface RDMainDbDAO {
     @Query("SELECT BuddyId FROM REBuddy WHERE BuddyId > 1")
     List<Integer> getAllBuddyIds();
 
-    @Query("SELECT * FROM REBuddy WHERE BUddyID = :id")
+    @Query("SELECT * FROM REBuddy WHERE BuddyId = :id")
     REBuddy getBuddyById(int id);
 
     @Query("SELECT BuddyId FROM REBuddy WHERE BuddyNo = :no")

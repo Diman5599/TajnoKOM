@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -31,7 +31,12 @@
         android:roundIcon="@mipmap/tkomico"
         android:supportsRtl="true"
         android:theme="@style/TajnoKOM">
-        <service android:name=".App"></service>
+        <activity
+            android:name=".ContactDetailsActivity"
+            android:exported="false"
+            />
+
+        <service android:name=".App" />
 
         <activity
             android:name=".SplashActivity"
@@ -48,17 +53,11 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            />
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".MessagesActivity"
             android:exported="true"
-            android:launchMode="singleInstance"
-            android:windowSoftInputMode="adjustResize"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity"/>
+            android:windowSoftInputMode="adjustResize">
         </activity>
 
         <receiver

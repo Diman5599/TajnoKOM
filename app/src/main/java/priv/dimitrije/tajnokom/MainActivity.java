@@ -30,14 +30,9 @@ import java.util.LinkedList;
 
 
 public class MainActivity extends AppCompatActivity {
-    private FragmentContainerView fragmentView;
     public Menu menu;
     public ContactsFragment contactsFragment;
     public ChatFragment chatFragment;
-
-    EditText dialogEditText;
-
-    FloatingActionButton btnDial;
 
     @Override
     public void onBackPressed() {
@@ -73,33 +68,6 @@ public class MainActivity extends AppCompatActivity {
         //fragmentView = findViewById(R.id.fragmentContainerView);
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentContainerView, new MainFragment()).commit();
 
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        dialogBuilder.setTitle("Позовите број");
-        dialogEditText = new EditText(this);
-        dialogEditText.setInputType(InputType.TYPE_CLASS_TEXT);
-        dialogBuilder.setView(dialogEditText);
-
-        dialogBuilder.setPositiveButton("Позови", (dialog, which) -> {
-            MyCall call = new MyCall(App.getInstance().usrAccount);
-            CallOpParam callOpParam = new CallOpParam(true);
-            try {
-                String dstUri = "sip:" + dialogEditText.getText().toString() + "@" + App.getInstance().domain;
-                System.out.println(dstUri + "DDDDDDDDDDDDDDDDDdddddddddddddddddDDDDDDDDDDDDDDDDDDDdddddddddddddd");
-                call.makeCall(dstUri, callOpParam);
-                dialogEditText = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        dialogBuilder.setNegativeButton("Откажи", (dialog, which) ->{
-            dialogEditText = null;
-            dialog.dismiss();
-        });
-
-        btnDial = findViewById(R.id.btnDial);
-        btnDial.setOnClickListener(v -> {
-            dialogBuilder.create().show();
-        });
 
     }
 

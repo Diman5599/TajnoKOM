@@ -2,6 +2,7 @@ package priv.dimitrije.tajnokom;
 
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -17,15 +18,17 @@ import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.navigation.NavigationView;
 
 import org.pjsip.pjsua2.BuddyInfo;
 import org.pjsip.pjsua2.SendInstantMessageParam;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -39,11 +42,17 @@ public class MessagesActivity extends AppCompatActivity {
     RecyclerView rvMessages;
     FloatingActionButton btnSend;
     EditText etMessage;
-    TextInputLayout etMessageLayout;
-    DrawerLayout drawerLayout;
+    DrawerLayout nvDrawer;
 
-    String currentBuddyName;
-    String currentBuddyNo;
+    //fioka
+    TextView tvDrawerInitials;
+    TextView tvDrawerContactName;
+    TextView tvDrawerContactNumber;
+    NavigationView navView;
+
+    public static String currentBuddyName;
+    public static String currentBuddyNo;
+    private int currentBuddyId;
 
     protected static TextView tvChatContactStatus;
 
@@ -87,6 +96,7 @@ public class MessagesActivity extends AppCompatActivity {
 
         currentBuddyName = getIntent().getExtras().getString("buddyName");
         currentBuddyNo = getIntent().getExtras().getString("buddyNo");
+        currentBuddyId = getIntent().getExtras().getInt("buddyId");
 
         ProgressDialog progressDialog = ProgressDialog.show(MessagesActivity.this, "", "", true);
         progressDialog.show();
@@ -132,22 +142,44 @@ public class MessagesActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.chatToolbar);
         getLayoutInflater().inflate(R.layout.chatbar, toolbar);
 
-        TextView tvChatContactName = findViewById(R.id.tvChatContactNm);
-        tvChatContactName.setText(currentBuddyName);
-        TextView tvChatInitials = findViewById(R.id.tvChatInitials);
-        tvChatInitials.setGravity(Gravity.CENTER);
-        tvChatInitials.setText(getInitials(currentBuddyName));
-        tvChatContactStatus = findViewById(R.id.tvChatContactStatus);
-        tvChatContactStatus.setText(getStatus(buddyStatus));
+        nvDrawer = findViewById(R.id.nvDrawer);
+        nvDrawer.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                tvDrawerInitials = findViewById(R.id.tvDrawerInitials);
+                tvDrawerInitials.setText(getInitials(currentBuddyName));
+                tvDrawerContactName = findViewById(R.id.tvDrawerContactName);
+                tvDrawerContactName.setText(currentBuddyName);
+                tvDrawerContactNumber = findViewById(R.id.tvDrawerContactNumber);
+                tvDrawerContactNumber.setText(currentBuddyNo);
+            }
+        });
+        navView = findViewById(R.id.navView);
+        navView.getMenu()
+                .findItem(R.id.action_contact_details)
+                .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        Intent details = new Intent(navView.getContext(), ContactDetailsActivity.class);
+                        details.putExtra("buddyName", currentBuddyName);
+                        details.putExtra("buddyNo", currentBuddyNo);
+                        details.putExtra("buddyId", currentBuddyId);
+                        startActivity(details);
+                        nvDrawer.closeDrawer(Gravity.RIGHT);
+                        return true;
+                    }
+                });
 
         setSupportActionBar(toolbar);
 
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_arrow_back_ios_24);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         rvMessages = findViewById(R.id.rvMessages);
         etMessage = findViewById(R.id.etMessage);
-        etMessageLayout = findViewById(R.id.etMessageLayout);
+
+        //etMessageLayout = findViewById(R.id.etMessageLayout);
 
         btnSend = findViewById(R.id.btnSend);
         btnSend.setOnClickListener((v -> {
@@ -174,7 +206,7 @@ public class MessagesActivity extends AppCompatActivity {
             reMessage.msgText = cleartextMessageContent;
             reMessage.contactId = App.getInstance().activeContactId;
             reMessage.sent = true;
-            reMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
+            reMessage.time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss:SSS"));
 
             Thread writeMsgToDb = new Thread(() -> {
                 App.getInstance().getDb().getDAO().insertMessage(reMessage);
@@ -206,14 +238,14 @@ public class MessagesActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        etMessage.setOnFocusChangeListener((v, hasFocus) -> {
+       /* etMessage.setOnFocusChangeListener((v, hasFocus) -> {
             if(hasFocus){
                 etMessageLayout.setHint("");
             }else{
                 if(etMessage.getText().toString().equals(""))
                     etMessageLayout.setHint("Унесите поруку...");
             }
-        });
+        });*/
     }
 
     List<REMessage> helperList;
@@ -221,6 +253,19 @@ public class MessagesActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        TextView tvChatContactName = findViewById(R.id.tvChatContactNm);
+        tvChatContactName.setText(currentBuddyName);
+        TextView tvChatInitials = findViewById(R.id.tvChatInitials);
+        tvChatInitials.setGravity(Gravity.CENTER);
+        tvChatInitials.setText(getInitials(currentBuddyName));
+        tvChatContactStatus = findViewById(R.id.tvChatContactStatus);
+        tvChatContactStatus.setText(getStatus(buddyStatus));
 
         try {
             Object lock = new Object();
@@ -252,32 +297,32 @@ public class MessagesActivity extends AppCompatActivity {
             LinearLayoutManager linearLayoutManager = (LinearLayoutManager)((RecyclerView) v).getLayoutManager();
             int pos = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
             if (pos <= 2){
-                    if(App.getInstance().activeChatList.size() >= 50) {
-                        AsyncTask getMoreMsgs = new AsyncTask() {
-                            @Override
-                            protected Object doInBackground(Object[] objects) {
-                                    helperList = App.getInstance().getDb()
-                                            .getDAO()
-                                            .getMsgsFrom(
-                                                    App.getInstance().activeContactId,
-                                                    App.getInstance().activeChatList.size() + 50
-                                            );
-                                    App.getInstance().closeDb();
-                                    return null;
-                            }
+                if(App.getInstance().activeChatList.size() >= 50) {
+                    AsyncTask getMoreMsgs = new AsyncTask() {
+                        @Override
+                        protected Object doInBackground(Object[] objects) {
+                            helperList = App.getInstance().getDb()
+                                    .getDAO()
+                                    .getMsgsFrom(
+                                            App.getInstance().activeContactId,
+                                            App.getInstance().activeChatList.size() + 50
+                                    );
+                            App.getInstance().closeDb();
+                            return null;
+                        }
 
-                            @Override
-                            protected void onPostExecute(Object o) {
-                                synchronized (App.getInstance().activeChatList) {
-                                    App.getInstance().activeChatList.clear();
-                                    App.getInstance().activeChatList.addAll(helperList);
-                                }
-                                messagesRVAdapter. notifyItemRangeChanged(0, helperList.size());
+                        @Override
+                        protected void onPostExecute(Object o) {
+                            synchronized (App.getInstance().activeChatList) {
+                                App.getInstance().activeChatList.clear();
+                                App.getInstance().activeChatList.addAll(helperList);
                             }
-                        };
-                        getMoreMsgs.execute();
-                    }
+                            messagesRVAdapter. notifyItemRangeChanged(0, helperList.size());
+                        }
+                    };
+                    getMoreMsgs.execute();
                 }
+            }
         });
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -304,7 +349,10 @@ public class MessagesActivity extends AppCompatActivity {
         });
         markRead.start();
 
+
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -347,14 +395,15 @@ public class MessagesActivity extends AppCompatActivity {
             stopEditing();
             selectedMessages.clear();
         }else{
-            super.onBackPressed();
+            if(nvDrawer.isDrawerOpen(Gravity.RIGHT)) nvDrawer.closeDrawer(Gravity.RIGHT);
+            else previousActivity();
         }
+
     }
 
     private void stopEditing(){
         editing = false;
         messagesRVAdapter.resetOverlays();
-        //TODO: resetuj toolbar
         menu.removeItem(R.id.delete_msgs);
         getMenuInflater().inflate(R.menu.chatmenu, menu);
     }
@@ -385,17 +434,22 @@ public class MessagesActivity extends AppCompatActivity {
             case R.id.delete_msgs:
                 deleteSelectedMessages();
                 break;
-            case R.id.action_contact_details:
-                //TODO: Prikazi detalje kontakta
-
-                break;
             case R.id.action_open_drawer:
-                drawerLayout.open();
+                nvDrawer.openDrawer(Gravity.RIGHT);
+                break;
+            case android.R.id.home:
+                previousActivity();
                 break;
             default:
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void previousActivity(){
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void deleteSelectedMessages() {

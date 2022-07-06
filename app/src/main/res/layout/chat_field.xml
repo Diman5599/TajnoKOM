@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:background="@drawable/circle"
-        android:textColor="@color/white"
+        android:textColor="?attr/colorOnPrimary"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -32,7 +32,8 @@
         android:layout_width="0dp"
         android:layout_height="25dp"
         android:layout_marginStart="10dp"
-        android:textColor="@color/white"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="?attr/colorOnPrimary"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -40,9 +41,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/tvChatInitials"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.111"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        />
+        app:layout_constraintVertical_bias="0.111" />
 
     <TextView
         android:id="@+id/tvLastMessage"
@@ -51,14 +50,13 @@
         android:layout_marginStart="10dp"
         android:layout_marginEnd="2dp"
         android:maxLines="1"
-        android:textColor="@color/white"
+        android:textAppearance="?attr/textAppearanceSubtitle1"
+        android:textColor="?attr/colorOnPrimary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/tvChatInitials"
-        app:layout_constraintTop_toBottomOf="@+id/tvContactNm"
-        android:textAppearance="?attr/textAppearanceSubtitle1"
-        />
+        app:layout_constraintTop_toBottomOf="@+id/tvContactNm" />
 
     <TextView
         android:id="@+id/tvUnreadCount"
@@ -66,14 +64,14 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="5dp"
         android:background="@drawable/small_circle"
+        android:textColor="?attr/colorOnPrimary"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.971"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.245"
-        />
+        app:layout_constraintVertical_bias="0.245" />
 
     <!--<Button
         android:id="@+id/btnChatOverlay"

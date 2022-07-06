@@ -32,6 +32,8 @@ import org.pjsip.pjsua2.UaConfig;
 import org.pjsip.pjsua2.Version;
 import org.pjsip.pjsua2.pjsip_transport_type_e;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -127,7 +129,7 @@ public class App extends Service {
         receivedMessage.msgText = msg.getMsgBody();
         receivedMessage.sent = false;
         receivedMessage.read = false;
-        receivedMessage.time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss:SSS"));
+        receivedMessage.time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss:SSS"));
 
         //start task for writing
         WriteNewMessageTask writeTask = new WriteNewMessageTask();
@@ -148,6 +150,8 @@ public class App extends Service {
             Intent receivedMessageIntent = new Intent(this, MessagesActivity.class);
             receivedMessageIntent.putExtra("buddyName", buddyName);
             receivedMessageIntent.putExtra("buddyNo", buddyNo);
+            receivedMessageIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            receivedMessageIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 102, receivedMessageIntent, 0);
 
@@ -208,7 +212,7 @@ public class App extends Service {
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel("MsgChan", name, importance);
             channel.enableLights(true);
-            channel.setLightColor(Color.GREEN);
+            channel.setLightColor(Color.RED);
             channel.setDescription(description);
 
             // Register the channel with the system; you can't change the importance
@@ -264,6 +268,7 @@ public class App extends Service {
             e.printStackTrace();
         }
         endpoint.delete();
+        App.instance = null;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package priv.dimitrije.tajnokom;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Index;
@@ -20,4 +21,10 @@ public class REBuddy implements Serializable {
 
     @ColumnInfo(name = "isSaved")
     public boolean isSaved;
+
+    @NonNull
+    @Override
+    public String toString() {
+        return BuddyName;
+    }
 }
