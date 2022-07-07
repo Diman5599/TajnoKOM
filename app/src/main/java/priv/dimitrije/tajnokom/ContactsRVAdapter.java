@@ -57,7 +57,22 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
         holder.tvInitials.setGravity(Gravity.CENTER);
         holder.setIndex(position);
         holder.bindButton(buttonMap);
-
+        if(fragment.isEditig()){
+            ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+            lp.horizontalBias = 0;
+            holder.cbSelectedContact.setLayoutParams(lp);
+            holder.cbSelectedContact.setVisibility(View.VISIBLE);
+        }else{
+            ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(1, 1);
+            lp.horizontalBias = 0;
+            holder.cbSelectedContact.setLayoutParams(lp);
+            holder.cbSelectedContact.setVisibility(View.INVISIBLE);
+        }
+        if(fragment.selectedContacts.contains(localDataSet.get(position))){
+            holder.cbSelectedContact.setChecked(true);
+        }else{
+            holder.cbSelectedContact.setChecked(false);
+        }
     }
 
     private void clicked(View v){
@@ -120,13 +135,8 @@ public class ContactsRVAdapter extends RecyclerView.Adapter<ContactsRVAdapter.Vi
 
             overlay.setOnLongClickListener((vw -> {
                 if(!contactsRVAdapter.fragment.isEditig()) {
-                 ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
-                    lp.horizontalBias = 0;
-                    cbSelectedContact.setLayoutParams(lp);
-                    cbSelectedContact.setVisibility(View.VISIBLE);
                     cbSelectedContact.setChecked(true);
                     contactsRVAdapter.fragment.toggleEditing();
-
                 }
                 return true;
             }));

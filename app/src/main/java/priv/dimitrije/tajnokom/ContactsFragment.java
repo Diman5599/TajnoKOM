@@ -4,6 +4,7 @@ import android.icu.text.Collator;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,10 +30,12 @@ import java.util.List;
  */
 public class ContactsFragment extends Fragment {
 
+    RecyclerView.OnScrollListener onScrollListener;
+
     protected static RecyclerView rvContacts;
     private boolean editing;
 
-    private LinkedList<REBuddy> selectedContacts;
+    protected LinkedList<REBuddy> selectedContacts;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -97,7 +100,31 @@ public class ContactsFragment extends Fragment {
             mMenu.removeItem(R.id.action_logout);
             mMenu.removeItem(R.id.action_add_buddy);
             getActivity().getMenuInflater().inflate(R.menu.edit_contacts_menu, mMenu);
-            for (int c = 0; c < rvContacts.getChildCount(); c++) {
+           /* onScrollListener = new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    ContactsRVAdapter.ViewHolder vh1 = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(
+                            ((LinearLayoutManager)rvContacts.getLayoutManager()).findFirstVisibleItemPosition()
+                    );
+                    ContactsRVAdapter.ViewHolder vh2 = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(
+                            ((LinearLayoutManager)rvContacts.getLayoutManager()).findLastVisibleItemPosition()
+                    );
+
+                    ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+                    lp.horizontalBias = 0;
+
+                    vh1.cbSelectedContact.setLayoutParams(lp);
+                    vh1.cbSelectedContact.setVisibility(View.VISIBLE);
+                    vh2.cbSelectedContact.setLayoutParams(lp);
+                    vh2.cbSelectedContact.setVisibility(View.VISIBLE);
+                }
+            };
+            rvContacts.setOnScrollListener(onScrollListener);
+            */
+            int g1 = ((LinearLayoutManager)rvContacts.getLayoutManager()).findFirstVisibleItemPosition();
+            int g2 = ((LinearLayoutManager)rvContacts.getLayoutManager()).findLastVisibleItemPosition();
+            for (int c = g1; c <= g2; c++) {
                 ContactsRVAdapter.ViewHolder vh = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(c);
 
                 ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
@@ -105,20 +132,26 @@ public class ContactsFragment extends Fragment {
 
                 vh.cbSelectedContact.setLayoutParams(lp);
                 vh.cbSelectedContact.setVisibility(View.VISIBLE);
+
             }
         }else{
             mMenu.removeItem(R.id.action_delete_contact);
             mMenu.removeItem(R.id.action_cancel_contact_edit);
             getActivity().getMenuInflater().inflate(R.menu.mainmenu, mMenu);
             editing = false;
-            for (int c = 0; c < rvContacts.getAdapter().getItemCount(); c++) {
+            /*rvContacts.removeOnScrollListener(onScrollListener);*/
+
+            int g1 = ((LinearLayoutManager)rvContacts.getLayoutManager()).findFirstVisibleItemPosition();
+            int g2 = ((LinearLayoutManager)rvContacts.getLayoutManager()).findLastVisibleItemPosition();
+            for (int c = g1; c <= g2; c++) {
                 ContactsRVAdapter.ViewHolder vh = (ContactsRVAdapter.ViewHolder) rvContacts.findViewHolderForAdapterPosition(c);
-                ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(1, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+
+                ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(1, 1);
                 lp.horizontalBias = 0;
 
                 vh.cbSelectedContact.setLayoutParams(lp);
                 vh.cbSelectedContact.setVisibility(View.INVISIBLE);
-                vh.cbSelectedContact.setChecked(false);
+
             }
         }
     }

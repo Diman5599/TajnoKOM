@@ -58,9 +58,9 @@ public class LogInActivity extends AppCompatActivity {
         btnPrijava.getLayoutParams().width = viewsWidth;
 
         //test parametri
-        host.setText("192.168.8.100");
-        usr.setText("100");
-        pass.setText("100");
+        host.setText("sip.linphone.org");
+        usr.setText("dim55");
+        pass.setText("Kolasinac0212");
     }
 
     @Override
